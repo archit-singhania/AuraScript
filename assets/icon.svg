@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs><linearGradient id="surface" x2="1" y2="1"><stop stop-color="#171b2c"/><stop offset="1" stop-color="#302948"/></linearGradient><linearGradient id="prism" x2="1" y2="1"><stop stop-color="#dfdcff"/><stop offset="1" stop-color="#a899ed"/></linearGradient></defs>
+  <rect x="4" y="4" width="248" height="248" rx="59" fill="url(#surface)"/>
+  <path d="M88 68 36 128 88 188 M168 68 220 128 168 188" fill="none" stroke="#dbdbea" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M148 51 102 205 M122 94 163 128 108 162" fill="none" stroke="url(#prism)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

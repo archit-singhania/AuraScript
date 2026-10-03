@@ -1,0 +1,55 @@
+name: Verify AuraScript
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-services:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm audit --audit-level=high
+  windows-application:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run test:app
+      - run: npm run build:win
+      - run: node scripts/verify-package.cjs
+      - name: Test packaged executable
+        shell: pwsh
+        run: |
+          $env:AURA_EXECUTABLE = Join-Path $PWD 'dist/win-unpacked/AuraScript.exe'
+          npm run test:app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AuraScript-Windows
+          path: dist/*.exe
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AuraScript-application-evidence
+          path: test-results/

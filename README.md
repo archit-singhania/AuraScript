@@ -14,7 +14,7 @@ Open a folder, select a file, edit it, and save with Ctrl+S. The workspace owns 
 
 ```powershell
 npm test
-npm run test:electron
+npm run test:app
 npm run build:win
 ```
 
@@ -25,5 +25,6 @@ The Electron acceptance test uses an isolated application profile and a labeled 
 - [Architecture and local data boundaries](docs/ARCHITECTURE.md)
 - [Provider and desktop setup](docs/SETUP.md)
 - [Release instructions](docs/RELEASE.md)
+- [Verified portfolio evidence and CV wording](docs/PORTFOLIO.md)
 
 AI, voice, vision, operating-system notifications, and native device behavior have explicit runtime requirements. The verification record distinguishes automated local checks from provider and hardware checks that still require a real device or account.

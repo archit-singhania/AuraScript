@@ -1,0 +1,96 @@
+{
+  "name": "aurascript",
+  "version": "3.0.0",
+  "private": true,
+  "description": "A private, polished coding workspace with a local-first assistant.",
+  "author": "Archit Singhania",
+  "license": "MIT",
+  "main": "src/main.cjs",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "prepare:editor": "node scripts/bundle-editor.cjs",
+    "prepare:assets": "node scripts/build-icons.cjs",
+    "postinstall": "node scripts/bundle-editor.cjs",
+    "check": "node scripts/check-source.cjs",
+    "doctor": "node scripts/doctor.cjs",
+    "test": "node --test tests/*.test.cjs",
+    "test:app": "node tests/electron-acceptance.cjs",
+    "test:local-model": "node scripts/check-local-model.cjs",
+    "test:local-session": "node scripts/check-local-session.cjs",
+    "build:win": "npm run check && npm run prepare:editor && electron-builder --win",
+    "build:mac": "npm run check && npm run prepare:editor && electron-builder --mac",
+    "build:linux": "npm run check && npm run prepare:editor && electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "playwright": "1.62.1",
+    "monaco-editor": "0.57.0"
+  },
+  "overrides": {
+    "dompurify": "3.4.16",
+    "@electron/get": "5.1.0"
+  },
+  "build": {
+    "appId": "com.architsinghania.aurascript.studio",
+    "productName": "AuraScript",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "docs",
+        "to": "guides/docs",
+        "filter": [
+          "*.md"
+        ]
+      },
+      {
+        "from": "README.md",
+        "to": "guides/README.md"
+      },
+      {
+        "from": "LICENSE",
+        "to": "guides/LICENSE"
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png",
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png",
+      "category": "Development"
+    }
+  }
+}

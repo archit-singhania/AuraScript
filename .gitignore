@@ -1,0 +1,15 @@
+node_modules/
+src/vendor/
+dist/
+build/
+test-results/
+playwright-report/
+.runtime/
+.cache/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+*.user
+.DS_Store

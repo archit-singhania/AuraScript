@@ -2,27 +2,29 @@
 
 Themes, typography, responsive placement, motion preferences, keyboard access, and private local settings are foundations. They are additional to the twenty capabilities below. A capability is accepted only when its actual operation and failure behavior pass; a visible button alone is insufficient.
 
-| # | Capability | Acceptance result to demonstrate |
-|---|---|---|
-| 1 | Project workspace and file explorer | Select a folder, navigate its real tree, and reopen the selected workspace after restart. Denied paths fail visibly. |
-| 2 | File creation, rename, and safe saving | Create and save text files; duplicate creation preserves the existing file; workspace escape is rejected. |
-| 3 | Persistent multi-file tabs | Open several files, switch without losing edits, and restore saved tabs on relaunch. Unsaved closing requires a decision. |
-| 4 | Revision-aware edits | An external file change causes a save conflict; inspect the new disk content before deciding to reload or retry. |
-| 5 | Workspace search and reviewed replacement | Search real file contents; inspect affected locations; replace selected matches with revision checks. |
-| 6 | Real language diagnostics | Monaco reports supported language errors, and installed Python produces syntax diagnostics with source locations. Missing Python is stated. |
-| 7 | Editor navigation and command palette | Use keyboard shortcuts, find text, select a diagnostic, and invoke palette actions without leaving the editor. |
-| 8 | Streaming terminal with cancellation | Launch an explicit command in the workspace, see stdout/stderr and exit status, stop a long-running process, and preserve its receipt. |
-| 9 | Git status, staging, commits, and history | Inspect actual changes, stage selected files, create a real commit, and inspect its diff. A non-Git folder does not show invented history. |
-| 10 | Streaming local/cloud assistant | Select a configured provider and stream a real response. Stop cancels the request; missing model/key/network produces an error. |
-| 11 | Contextual code review | Attach explicitly selected file context and ask for a review tied to the visible source. Context limits and file scope remain visible. |
-| 12 | Reviewed assistant patches | Preview proposed changes with their target files and original revisions; apply only after user approval; reject stale or invalid paths. |
-| 13 | Searchable assistant sessions | Create, reload, search, rename, and delete persisted sessions; failed turns remain distinguishable from successful responses. |
-| 14 | Local document ingestion and retrieval | Import a selected supported text document; search stored chunks and inspect the source; delete the document and its chunks. |
-| 15 | Editable memory | Create, edit, search, and delete memories, with values surviving restart. Export includes only the selected local data. |
-| 16 | Timezone-aware reminders | Save a dated reminder, observe due state, complete or delete it, and reload it after restart. Invalid times/zones fail explicitly. |
-| 17 | Reusable workflows and execution receipts | Save explicit workflow steps, inspect them before execution, run permitted steps, and read their persisted result or error. |
-| 18 | Voice input and spoken playback | Grant microphone access, capture real speech, transcribe with an available engine, play actual speech, and interrupt it. Missing devices/providers are stated. |
-| 19 | Selected image analysis | Attach an explicitly chosen valid image to a vision-capable provider and inspect its response. Invalid/oversized images and unsupported providers fail visibly. |
-| 20 | Versioned data export/import | Export local sessions, memories, documents, reminders, workflows, and settings; review/import compatible data without importing secrets or replacing unrelated files. |
+| # | Capability | Acceptance result to demonstrate | Executed evidence and remaining gate |
+|---|---|---|---|
+| 1 | Project workspace and file explorer | Select a folder, navigate its real tree, and reopen it after restart; denied paths fail visibly. | **Passed:** source and packaged native picker, tree, recent-path permission boundary, and full relaunch. |
+| 2 | File creation, rename, and safe saving | Create and save text; duplicate creation preserves existing files; workspace escape is rejected. | **Passed:** real creation/save, collision, mode preservation, traversal and retained-trash checks. Rename is implemented; its complete interactive flow remains in the manual guide. |
+| 3 | Persistent multi-file tabs | Switch independent buffers, restore tabs, and require a decision before closing unsaved work. | **Passed:** two actual Monaco models, saved read-back, native Keep editing, and restored tabs after executable relaunch. |
+| 4 | Revision-aware edits | External file changes block stale saves until reviewed. | **Passed:** external disk edit, rejected stale revision, visible Compare/rebase/save, and simultaneous-save boundary tests. |
+| 5 | Workspace search and reviewed replacement | Inspect real locations and replace selected matches with revision checks. | **Passed:** visible selected replacement, preview/confirmation, case and selected-position tests, stale-file rejection, and forced watcher preservation while typing. |
+| 6 | Real language diagnostics | Supported language workers and installed Python report real source locations. | **Passed:** actual Monaco JSON markers and Python AST syntax errors. Other bundled language-worker behavior and missing-interpreter UX are available for manual checking. |
+| 7 | Editor navigation and command palette | Invoke commands and navigate diagnostics with visible keyboard focus. | **Passed:** Ctrl+S, palette open/Escape, saved models, compact layouts. Complete keyboard and assistive-technology traversal remains a manual check. |
+| 8 | Streaming terminal with cancellation | Confirm a real workspace command, inspect output and exit, and stop a long-running process. | **Passed:** visible launch/confirmation/Stop, actual stdout, real exit status, process-tree cancellation, and persisted receipts. |
+| 9 | Git status, staging, commits, and history | Stage selected files, create a real commit, and inspect actual history/diffs. | **Passed:** visible staging/checkpoint, Git CLI read-back, staged/historical diffs and branch service checks. Git draft survives forced filesystem events. |
+| 10 | Streaming local/cloud assistant | Stream a configured model; Stop interrupts; missing providers fail explicitly. | **Passed:** actual qwen3:8b deltas, real interruption/restart, unavailable-provider UI, and cloud transport fixtures. Live paid/cloud accounts remain untested. |
+| 11 | Contextual code review | Attach explicit selected context and review that source without executing commands. | **Passed:** selected-fragment/context-boundary service contracts and isolated conversation fixtures. Live review quality for a chosen model remains a manual evaluation. |
+| 12 | Reviewed assistant patches | Preview targets and original revisions; approve explicitly; reject stale changes. | **Passed:** real preview/apply, approval requirement, unique-original matching and stale-revision rejection. Model-generated proposal quality remains a manual evaluation. |
+| 13 | Searchable assistant sessions | Reload, search, rename, and delete persistent sessions with honest turn status. | **Passed:** actual failed-turn UI, search/rename/reload, and completed/cancelled local-model messages after service restart. |
+| 14 | Local document ingestion and retrieval | Import text, search source excerpts, and remove deleted sources from retrieval. | **Passed:** visible file chooser/import/source search and restart persistence. Retrieval is lexical; it is not an embedding engine. |
+| 15 | Editable memory | Create, edit, enable/disable, delete, and export persistent memory. | **Passed:** visible create/edit, stored text, export/import, and full application relaunch. Context inclusion is controlled by the persisted enabled setting. |
+| 16 | Timezone-aware reminders | Resolve valid times, persist due/completed/cancelled status, and reload reminders. | **Passed:** visible scheduling, real due/completed state, timezone/DST/calendar guards, and restart. Operating-system notification display remains a native-device gate. |
+| 17 | Reusable workflows and execution receipts | Save and inspect an explicit command, confirm execution, and read its actual result. | **Passed:** visible create/review/run, real Git-version process output, confirmation rejection, receipts, and restart persistence. |
+| 18 | Voice input and spoken playback | Capture finalized audio with consent; transcribe/play through available engines; interrupt safely. | **Passed:** actual-module denied/late-permission cancellation lifecycle and finalized-MIME/multipart contracts. Physical microphone, live transcription, speaker output, and native permissions remain device/provider gates. |
+| 19 | Selected image analysis | Submit only a selected valid image to a capable model; fail unsupported inputs clearly. | **Passed:** image signature, size and Ollama capability boundary tests. Live vision inference and native selection/response quality remain provider/device gates. |
+| 20 | Versioned data export/import | Preview compatible records, preserve settings, exclude secrets and workspace paths, and keep unrelated files intact. | **Passed:** actual export/confirmed import, preserved records/settings, safe imported reminders, malformed-version rejection and encrypted-secret exclusion tests. |
+
+Executed evidence above means specific checks passed on the tested Windows runtime; it does not imply that every provider, operating system, or input device passed. The source and packaged desktop journeys each passed 18 acceptance groups with no renderer exceptions, alongside 35 service/boundary/lifecycle tests. Live review and proposal quality are evaluated against the model actually selected; provider fixtures establish protocol behavior rather than model quality.
 
 [Verification](VERIFICATION.md) records what has run. [Manual testing](MANUAL-TESTING.md) provides the user journey for each capability. Provider-dependent paths require the selected engine and are not advertised as successful when it is absent.
