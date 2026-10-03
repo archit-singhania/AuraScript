@@ -1,0 +1,5 @@
+{
+  "label": "Public acceptance fixture",
+  "enabled": true,
+  "retries": 2
+}

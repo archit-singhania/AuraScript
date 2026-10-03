@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; worker-src 'self' blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>AuraScript — A considered coding workspace</title>
+  <link rel="icon" href="assets/aura.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="/vendor/editor.js" defer></script>
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <div id="app" class="app loading" aria-busy="true">
+    <div class="startup"><img src="assets/aura.svg" alt="AuraScript" width="64" height="64"><h1>AuraScript</h1><p>Opening your private workspace…</p></div>
+  </div>
+  <div id="notifications" class="notifications" aria-live="polite" aria-atomic="false"></div>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  <dialog id="palette" aria-labelledby="palette-title"></dialog>
+  <script src="voice.js" type="module"></script>
+</body>
+</html>
