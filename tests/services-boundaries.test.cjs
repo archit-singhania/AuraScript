@@ -168,3 +168,35 @@ test('disposing a running response aborts transport and persists cancelled parti
   assert.equal(message.status, 'cancelled');
   assert.equal(message.content, 'Partial');
 });
+
+for (const failure of ['timeout', 'output limit']) {
+  test(`provider ${failure} remains a failed response with bounded partial history`, async (t) => {
+    const { service, events } = await fixture(t);
+    service.options.responseTimeoutMs = 500;
+    const server = http.createServer((_req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/x-ndjson' });
+      res.write(JSON.stringify({ message: { content: 'Partial' }, done: false }) + '\n');
+      if (failure === 'output limit')
+        res.end(JSON.stringify({ message: { content: 'x'.repeat(200001) }, done: false }) + '\n');
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    t.after(() => {
+      server.closeAllConnections();
+      return new Promise((resolve) => server.close(resolve));
+    });
+    await service.invoke('settings:update', {
+      model: 'fixture',
+      endpoint: `http://127.0.0.1:${server.address().port}`,
+    });
+    const turn = await service.invoke('ai:send', { text: 'Check provider failure' });
+    await waitFor(() => events.some((event) => event.type === 'ai:error'));
+    const error = events.find((event) => event.type === 'ai:error');
+    assert.equal(error.cancelled, false);
+    assert.match(error.error, failure === 'timeout' ? /timed out/ : /size limit/);
+    const history = await service.invoke('conversations:read', { id: turn.conversationId });
+    assert.equal(history.messages.at(-1).status, 'failed');
+    assert.ok(history.messages.at(-1).content.startsWith('Partial'));
+    assert.ok(history.messages.at(-1).content.length <= 200000);
+    assert.equal((await service.invoke('receipts:list'))[0].status, 'failed');
+  });
+}

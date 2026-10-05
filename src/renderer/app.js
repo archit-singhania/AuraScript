@@ -83,6 +83,7 @@ const state = {
   activeProcess: null,
   diagnostics: [],
   git: null,
+  gitSelected: new Set(),
   messages: [],
   conversationId: null,
   turnId: null,
@@ -320,6 +321,7 @@ async function openWorkspace(path) {
   state.tabs = [];
   state.activeFile = null;
   state.git = null;
+  state.gitSelected.clear();
   state.commitMessage = '';
   state.search = { query: '', replacement: '', caseSensitive: false, matches: [], selected: new Set() };
   state.workspaces = array(await invoke('workspace:recent'));
@@ -950,7 +952,7 @@ function renderBottom() {
                 `<option value="${attr(p.id)}" ${state.activeProcess === p.id ? 'selected' : ''}>${esc(p.command || 'Process')} ${p.done ? `· ${p.cancelled ? 'stopped' : p.code}` : '· running'}</option>`,
             )
             .join('') || '<option value="">No runs</option>'
-        }</select>${button('process-stop', 'Stop', { id: 'terminal-stop', className: 'small' })}`
+        }</select>${button('process-stop', 'Stop', { id: 'terminal-stop', className: 'small', data: state.processes.get(state.activeProcess)?.done === false ? '' : 'disabled' })}`
       : ''
   }${button('close-bottom', '', { className: 'icon-button ghost', iconName: 'close', title: 'Close bottom panel' })}</div><div id="bottom-content" class="${state.bottom === 'terminal' ? 'terminal-body' : 'grow'}">${state.bottom === 'terminal' ? terminalOutput() : ''}</div>${state.bottom === 'terminal' ? `<form id="terminal-form" class="terminal-input"><span class="prompt">›</span><label class="sr-only" for="terminal-command">Terminal command</label><input id="terminal-command" autocomplete="off" spellcheck="false" placeholder="Run a command in this workspace…" ${state.workspace ? '' : 'disabled'}><button type="submit" class="primary" id="terminal-run">Run</button></form>` : ''}`;
   if (state.bottom === 'diagnostics') renderProblems();
@@ -985,6 +987,7 @@ async function runProcess(command) {
 async function refreshGit() {
   if (!state.workspace) {
     state.git = null;
+    state.gitSelected.clear();
     renderSidebar();
     return;
   }
@@ -994,6 +997,8 @@ async function refreshGit() {
     state.git.log = array(logs?.commits || logs);
     const branches = await invoke('git:branches');
     state.git.branches = array(branches?.branches || branches);
+    const changedPaths = new Set(gitEntries().map((file) => file.path));
+    state.gitSelected = new Set([...state.gitSelected].filter((path) => changedPaths.has(path)));
     renderSidebar();
     $('#git-status-label').textContent = state.git.branch ? `⑂ ${state.git.branch}` : '';
   } catch (e) {
@@ -1020,7 +1025,7 @@ function renderGit() {
   if (g.error)
     return `<div class="tree-empty">${esc(g.error)}<div class="divider"></div>Initialize or select a Git repository using your terminal.</div>`;
   const entries = gitEntries();
-  return `<div class="git-section"><div class="row"><strong class="grow">⑂ ${esc(g.branch || 'Repository')}</strong>${button('git-branches', 'Branches', { id: 'git-branches', className: 'small' })}</div><p class="small muted" style="margin-top:8px">${entries.length} changed ${entries.length === 1 ? 'file' : 'files'} • select what you commit</p></div><div class="git-section"><h3>CHANGES</h3>${entries.length ? entries.map((f) => `<div class="git-file"><input type="checkbox" class="git-select" data-path="${attr(f.path)}" aria-label="Select ${attr(f.path)}"><span class="status">${esc(f.status || f.indexStatus || f.worktreeStatus || 'M')}</span><button class="ghost grow ellipsis" data-action="git-diff" data-path="${attr(f.path)}" data-staged="${!!(f.staged || (f.indexStatus && f.indexStatus !== ' ' && f.indexStatus !== '?'))}" title="Inspect ${attr(f.path)}">${esc(f.path)}</button>${button(f.staged ? 'git-unstage' : 'git-stage', f.staged ? '−' : '+', { data: `data-path="${attr(f.path)}"`, title: f.staged ? 'Unstage file' : 'Stage file' })}</div>`).join('') : '<p class="small muted">Working tree is clean.</p>'}<div class="row" style="margin-top:10px">${button('git-stage-selected', 'Stage selected', { id: 'git-stage-selected', className: 'small' })}${button('git-unstage-selected', 'Unstage', { className: 'small' })}</div></div><div class="git-section"><form id="git-commit-form" class="stack" style="gap:8px"><label for="git-commit-message" class="small">Commit message</label><textarea id="git-commit-message" placeholder="Describe your staged changes" style="min-height:70px;font-size:12px">${esc(state.commitMessage)}</textarea><button type="submit" class="primary" id="git-commit">Commit staged changes</button></form></div><div class="git-section"><h3>COMMIT HISTORY</h3>${(g.log || []).map((c) => `<article class="git-log"><button data-action="git-commit-diff" data-id="${attr(c.hash || c.id)}">${esc(c.subject || c.message)}<small><span class="hash">${esc((c.hash || c.id || '').slice(0, 7))}</span> · ${esc(c.author || '')} · ${esc(date(c.date || c.createdAt))}</small></button></article>`).join('') || '<p class="small muted">No commits yet.</p>'}</div>`;
+  return `<div class="git-section"><div class="row"><strong class="grow">⑂ ${esc(g.branch || 'Repository')}</strong>${button('git-branches', 'Branches', { id: 'git-branches', className: 'small' })}</div><p class="small muted" style="margin-top:8px">${entries.length} changed ${entries.length === 1 ? 'file' : 'files'} • select what you commit</p></div><div class="git-section"><h3>CHANGES</h3>${entries.length ? entries.map((f) => `<div class="git-file"><input type="checkbox" class="git-select" ${state.gitSelected.has(f.path) ? 'checked' : ''} data-path="${attr(f.path)}" aria-label="Select ${attr(f.path)}"><span class="status">${esc(f.status || f.indexStatus || f.worktreeStatus || 'M')}</span><button class="ghost grow ellipsis" data-action="git-diff" data-path="${attr(f.path)}" data-staged="${!!(f.staged || (f.indexStatus && f.indexStatus !== ' ' && f.indexStatus !== '?'))}" title="Inspect ${attr(f.path)}">${esc(f.path)}</button>${button(f.staged ? 'git-unstage' : 'git-stage', f.staged ? '−' : '+', { data: `data-path="${attr(f.path)}"`, title: f.staged ? 'Unstage file' : 'Stage file' })}</div>`).join('') : '<p class="small muted">Working tree is clean.</p>'}<div class="row" style="margin-top:10px">${button('git-stage-selected', 'Stage selected', { id: 'git-stage-selected', className: 'small' })}${button('git-unstage-selected', 'Unstage', { className: 'small' })}</div></div><div class="git-section"><form id="git-commit-form" class="stack" style="gap:8px"><label for="git-commit-message" class="small">Commit message</label><textarea id="git-commit-message" placeholder="Describe your staged changes" style="min-height:70px;font-size:12px">${esc(state.commitMessage)}</textarea><button type="submit" class="primary" id="git-commit">Commit staged changes</button></form></div><div class="git-section"><h3>COMMIT HISTORY</h3>${(g.log || []).map((c) => `<article class="git-log"><button data-action="git-commit-diff" data-id="${attr(c.hash || c.id)}">${esc(c.subject || c.message)}<small><span class="hash">${esc((c.hash || c.id || '').slice(0, 7))}</span> · ${esc(c.author || '')} · ${esc(date(c.date || c.createdAt))}</small></button></article>`).join('') || '<p class="small muted">No commits yet.</p>'}</div>`;
 }
 async function showGitDiff(payload) {
   const r = await invoke('git:diff', payload);
@@ -1883,7 +1888,9 @@ async function action(name, node) {
       return refreshGit();
     case 'git-stage-selected':
     case 'git-unstage-selected': {
-      const selected = $$('.git-select:checked').map((e) => e.dataset.path);
+      const selected = [...state.gitSelected].filter((path) =>
+        gitEntries().some((file) => file.path === path),
+      );
       if (!selected.length) throw new Error('Select files first.');
       await invoke(name === 'git-stage-selected' ? 'git:stage' : 'git:unstage', { paths: selected });
       return refreshGit();
@@ -2150,6 +2157,10 @@ document.addEventListener('change', (e) => {
               : input.value;
     guard(() => updateSettings({ [name]: value }));
   }
+  if (input.classList.contains('git-select')) {
+    if (input.checked) state.gitSelected.add(input.dataset.path);
+    else state.gitSelected.delete(input.dataset.path);
+  }
   if (input.classList.contains('match-select')) {
     const index = Number(input.dataset.index);
     if (input.checked) state.search.selected.add(index);
@@ -2389,3 +2400,31 @@ async function boot() {
   }
 }
 boot();
+
+// Pointer highlights update only the floating interaction material, at most once per frame.
+(() => {
+  let frame = 0,
+    point;
+  const enabled = () =>
+    !matchMedia('(prefers-reduced-motion: reduce)').matches &&
+    document.documentElement.dataset.reduceMotion !== 'true';
+  document.addEventListener(
+    'pointermove',
+    (event) => {
+      if (!enabled()) return;
+      const surface = event.target.closest('.glass,.topbar,.rail,.chat-composer,dialog,.header-actions');
+      if (!surface) return;
+      point = { surface, x: event.clientX, y: event.clientY };
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const { surface, x, y } = point;
+        const rect = surface.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        surface.style.setProperty('--glass-x', `${Math.round(((x - rect.left) / rect.width) * 100)}%`);
+        surface.style.setProperty('--glass-y', `${Math.round(((y - rect.top) / rect.height) * 100)}%`);
+      });
+    },
+    { passive: true },
+  );
+})();

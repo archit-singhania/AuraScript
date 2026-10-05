@@ -8,11 +8,11 @@ This file records executed checks for the new standalone repository. It does not
 |---|---|---|
 | Clean locked dependency installation | Passed, as reported by the root implementation agent | Pinned runtime and offline editor installed in this repository |
 | Full dependency advisory audit | Passed: zero advisories | `test-results/dependency-audit.json` |
-| Source Electron acceptance | Passed: 18 acceptance groups, zero renderer exceptions | `test-results/electron-source/acceptance.json`; final run 2026-10-03T11:06:45.762Z |
-| Packaged Electron acceptance | Passed: 18 acceptance groups, zero renderer exceptions | `test-results/electron-packaged/acceptance.json`; final run 2026-10-03T11:12:27.638Z, real release executable, native Keep editing and full relaunch |
-| Node service, provider, security, stream, and voice lifecycle tests | Passed: 35 tests, zero failures/errors/skips | `test-results/unit-summary.json` and `test-results/unit-tests.xml`; 19 service and 16 boundary/provider/stream/voice tests |
-| Real local Ollama inference | Passed: qwen3:8b, 16 streamed deltas, 29,870 ms | `test-results/local-model.json`; actual 34 input / 17 output tokens, no model download |
-| Real assistant session, interruption, and restart | Passed with qwen3:8b | `test-results/local-session.json`; 27 completed deltas, 4 persisted messages, 85 input / 28 output tokens |
+| Source Electron acceptance | Passed: 19 acceptance groups, zero renderer exceptions | `test-results/electron-source/acceptance.json`; final run 2026-10-05T07:00:38.161Z |
+| Packaged Electron acceptance | Passed: 19 acceptance groups, zero renderer exceptions | `test-results/electron-packaged/acceptance.json`; final run 2026-10-03T11:12:27.638Z, real release executable, native Keep editing and full relaunch |
+| Node service, provider, security, stream, and voice lifecycle tests | Passed: 37 tests, zero failures/errors/skips | `test-results/unit-summary.json` and `test-results/unit-tests.xml`; 21 service and 16 boundary/provider/stream/voice tests |
+| Historical local Ollama inference (October 3) | Passed: qwen3:8b, 16 streamed deltas, 29,870 ms | `test-results/local-model.json`; actual 34 input / 17 output tokens, no model download |
+| Historical assistant session, interruption, and restart (October 3) | Passed with qwen3:8b | `test-results/local-session.json`; 27 completed deltas, 4 persisted messages, 85 input / 28 output tokens |
 | Windows release build and package inspection | Passed: final NSIS build; 27 runtime/asset files match source | `test-results/package-source-match.json`; zero mismatches and private entries; installer is unsigned |
 | Physical microphone/speakers and notification delivery | Manual gate | Native devices and permissions require an actual device |
 | Live paid/cloud models and cloud voice/vision | Manual gate | No paid provider calls are included in automated acceptance |
@@ -40,10 +40,16 @@ The packaged recording contains 91 native frames sampled at the target 5 fps, wi
 | Field | Recorded value |
 |---|---|
 | Installer | `dist/AuraScript Setup 3.0.0.exe` |
-| Size | 113,930,984 bytes |
-| SHA-256 | `BD19F6AA2930B14E650783DF557B85985E7FDCEB2264CC2C3A4B8301AF79D833` |
+| Size | See current `dist/release-checksums.json` |
+| SHA-256 | See current `dist/release-checksums.json` |
 | Authenticode | `NotSigned` |
 | Tested executable | `dist/win-unpacked/AuraScript.exe` |
 | Artifact manifest | `dist/release-checksums.json` |
 
 The unpacked executable passed the complete desktop journey and relaunch. Interactive installer installation/uninstallation, signing, native hardware, and other operating-system packages remain explicit manual/platform checks. These are not inferred from the packaged application result.
+
+## October 5 full audit
+
+See [the full audit](FULL-AUDIT-2026-10-05.md). Source desktop acceptance now includes 19 groups, real interactive rename/trash/restore, watcher-safe Git selections, and disabled Stop after process exit. Provider timeouts and output limits persist failed partial responses; output history stays bounded. Node tests: 37 passed, no failures. The advisory check reported zero vulnerabilities.
+
+The October 3 qwen3:8b evidence remains historical. On October 5, the local Ollama endpoint was unavailable and the prior executable/model manifests were absent. No models were downloaded. Start/install your chosen local engine and rerun the explicit local-model/session commands for fresh inference acceptance. Cloud voice/vision and physical devices remain manual gates. Current packaged results and artifact hashes live in the machine-readable release manifest; packaged documentation is a build-time snapshot.

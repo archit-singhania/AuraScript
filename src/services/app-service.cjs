@@ -694,7 +694,10 @@ class AppService {
     return { turnId, conversationId: session.id };
   }
   async runAI(turn, session, messages, key, mode) {
-    const timeout = setTimeout(() => turn.controller.abort('Provider response timed out.'), 180000);
+    const timeout = setTimeout(
+      () => turn.controller.abort('Provider response timed out.'),
+      this.options.responseTimeoutMs || 180000,
+    );
     timeout.unref();
     try {
       const providers = require('../providers.cjs');
@@ -704,11 +707,12 @@ class AppService {
         signal: turn.controller.signal,
         messages,
         onDelta: (chunk) => {
-          turn.output += chunk;
-          if (turn.output.length > 200000) {
+          if (turn.output.length + chunk.length > 200000) {
+            turn.output += chunk.slice(0, 200000 - turn.output.length);
             turn.controller.abort('Response exceeded the size limit.');
             throw new Error('Response exceeded the size limit.');
           }
+          turn.output += chunk;
           this.emit({ type: 'ai:delta', turnId: turn.turnId, conversationId: session.id, text: chunk });
         },
       });
@@ -739,7 +743,9 @@ class AppService {
       });
       this.emit({ type: 'ai:done', turnId: turn.turnId, conversationId: session.id, message, proposals });
     } catch (error) {
-      const cancelled = turn.controller.signal.aborted;
+      const reason = turn.controller.signal.reason;
+      const cancelled =
+        turn.controller.signal.aborted && ['Cancelled by user.', 'Application closed.'].includes(reason);
       const message = {
         id: id(),
         role: 'assistant',
@@ -752,7 +758,7 @@ class AppService {
       this.store.save();
       const safeMessage = cancelled
         ? 'Response cancelled.'
-        : String(error.message || 'Assistant request failed.')
+        : String((turn.controller.signal.aborted && reason) || error.message || 'Assistant request failed.')
             .replaceAll(key || '\u0000', '[redacted]')
             .slice(0, 1000);
       this.store.receipt('ai:send', cancelled ? 'cancelled' : 'failed', {

@@ -1938,3 +1938,73 @@ html[data-high-contrast='true'] button {
     border-top: 2px solid Highlight;
   }
 }
+
+/* Floating interaction surfaces; code and document panes keep their solid material. */
+:root {
+  --glass-rim: #eee7ff42;
+  --glass-glint: #ffffff12;
+}
+html[data-theme='light'] {
+  --glass-rim: #ffffffdc;
+  --glass-glint: #ffffff85;
+}
+.topbar,
+.rail,
+.chat-composer,
+dialog,
+.palette,
+.toast {
+  background:
+    radial-gradient(ellipse at var(--glass-x, 22%) var(--glass-y, 0%), var(--glass-glint), transparent 65%),
+    var(--glass);
+  border-color: var(--glass-rim);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 #ffffff24,
+    inset 0 -1px 0 #b3a4f013,
+    0 8px 28px #00000012;
+}
+.rail {
+  margin: 10px 6px;
+  padding-inline: 2px;
+  border: 1px solid var(--glass-rim);
+  border-radius: 19px;
+}
+.rail button.active,
+.workspace-chip,
+.palette-trigger {
+  background: linear-gradient(145deg, var(--glass-glint), transparent), var(--glass);
+  border: 1px solid var(--glass-rim);
+  box-shadow:
+    inset 0 1px #ffffff21,
+    0 3px 10px #00000009;
+}
+.workspace-chip:hover,
+.palette-trigger:hover {
+  border-color: var(--accent);
+}
+html[data-reduce-transparency='true']
+  :is(.topbar, .rail, .chat-composer, dialog, .palette, .toast, .workspace-chip, .palette-trigger),
+html[data-high-contrast='true']
+  :is(.topbar, .rail, .chat-composer, dialog, .palette, .toast, .workspace-chip, .palette-trigger) {
+  background: var(--panel);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--line);
+  box-shadow: none;
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  :is(.topbar, .rail, .chat-composer, dialog, .palette, .toast, .workspace-chip, .palette-trigger) {
+    background: var(--panel);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+  }
+}
+@media (max-width: 650px) {
+  .rail {
+    margin-inline: 3px;
+    border-radius: 15px;
+  }
+}

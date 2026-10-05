@@ -118,3 +118,9 @@ Expected: settings persist; the editor stays readable; important content and con
 For each tested path, record the platform, app version, provider/model if any, expected result, actual result, and whether it passed. Include a screenshot or structured receipt when useful. Keep keys, normal account data, and private source out of portfolio evidence.
 
 All twenty capabilities map to [CAPABILITIES.md](CAPABILITIES.md). A successful source test does not replace a packaged relaunch, install check, native permission check, or live-provider check.
+
+## Glass material and accessibility
+
+Expect pearl or graphite navigation, a floating glass rail, violet selected controls, a highlighted toolbar, transparent dialog materials and restrained motion. Move the pointer over floating surfaces to see the highlight follow. Code, terminal output and diffs remain opaque and readable. Preferences persist light/dark/system, reduced motion, reduced transparency, high contrast and editor font size. Check a 900px window and a large text setting. Stop is disabled after a terminal run ends. A timeout is shown as a failure with preserved partial text; pressing Stop is recorded as cancellation.
+
+Local model availability must be checked on your current machine. October 3 live qwen3 results are recorded separately; the October 5 audit encountered an unavailable local engine. Use Preferences → Provider health, select an installed chat model explicitly, and run the local-model/session verification commands after starting Ollama.
