@@ -2,14 +2,14 @@
 
 This file records executed checks for the new standalone repository. It does not reuse acceptance results from the earlier editor under JarvisAI.
 
-## Recorded on 2026-10-03
+## Fresh local audit on 2026-10-05, with dated historical inference
 
 | Check | Result | Evidence |
 |---|---|---|
 | Clean locked dependency installation | Passed, as reported by the root implementation agent | Pinned runtime and offline editor installed in this repository |
 | Full dependency advisory audit | Passed: zero advisories | `test-results/dependency-audit.json` |
 | Source Electron acceptance | Passed: 19 acceptance groups, zero renderer exceptions | `test-results/electron-source/acceptance.json`; final run 2026-10-05T07:00:38.161Z |
-| Packaged Electron acceptance | Passed: 19 acceptance groups, zero renderer exceptions | `test-results/electron-packaged/acceptance.json`; final run 2026-10-03T11:12:27.638Z, real release executable, native Keep editing and full relaunch |
+| Packaged Electron acceptance | Passed: 19 acceptance groups, zero renderer exceptions | `test-results/electron-packaged/acceptance.json`; final run 2026-10-05T10:46:11.358Z, real release executable, native Keep editing and full relaunch |
 | Node service, provider, security, stream, and voice lifecycle tests | Passed: 37 tests, zero failures/errors/skips | `test-results/unit-summary.json` and `test-results/unit-tests.xml`; 21 service and 16 boundary/provider/stream/voice tests |
 | Historical local Ollama inference (October 3) | Passed: qwen3:8b, 16 streamed deltas, 29,870 ms | `test-results/local-model.json`; actual 34 input / 17 output tokens, no model download |
 | Historical assistant session, interruption, and restart (October 3) | Passed with qwen3:8b | `test-results/local-session.json`; 27 completed deltas, 4 persisted messages, 85 input / 28 output tokens |
@@ -20,7 +20,7 @@ This file records executed checks for the new standalone repository. It does not
 
 Automated acceptance creates a uniquely named temporary directory beneath the configured temporary directory, initializes a fixture Git repository, and uses a separate `AURA_TEST_DATA` profile. Every source or packaged run produces its own structured result and real application screenshots. Fixture text and commits are labeled public test data.
 
-The final source journey uses visible controls for selected search/replacement, terminal launch/cancellation, staging/committing, memory creation/editing, document import/search, reminder scheduling, workflow creation/run, and provider preferences. Assertions read actual files, process exits, Git history, and saved application state. It deliberately triggers filesystem events while typing to verify that search values and Git commit drafts survive the watcher. It also verifies native **Keep editing**, reviewed stale saves/patches, import confirmation, compact layouts, accessibility preferences, and full application relaunch.
+The final source and packaged journeys uses visible controls for selected search/replacement, terminal launch/cancellation, staging/committing, memory creation/editing, document import/search, reminder scheduling, workflow creation/run, and provider preferences. Assertions read actual files, process exits, Git history, and saved application state. It deliberately triggers filesystem events while typing to verify that search values and Git commit drafts survive the watcher. It also verifies native **Keep editing**, reviewed stale saves/patches, import confirmation, compact layouts, accessibility preferences, and full application relaunch.
 
 ## Actual visual evidence
 
@@ -29,11 +29,11 @@ The final source journey uses visible controls for selected search/replacement, 
 - [Compact assistant](screenshots/source-compact-assistant.png), [compact preferences](screenshots/source-compact-preferences.png), and [accessible preferences](screenshots/source-accessible-preferences.png)
 - [Actual source workflow video](demo/source-workflow.mp4)
 
-The video consists of 108 actual Electron `capturePage` frames sampled at a target 5 fps. Its encoded duration is approximately 21.6 seconds; capture wall time was 21.997 seconds. It demonstrates labeled public fixture operations and an actual unavailable-provider error. The separately recorded Ollama tests establish live inference. No screenshot or fixture is presented as a paid provider, microphone, or operating-system notification acceptance result.
+The video consists of actual Electron `capturePage` frames sampled at a target 5 fps. The current result JSON records actual frame count and capture wall time. It demonstrates labeled public fixture operations and an actual unavailable-provider error. The separately recorded Ollama tests establish live inference. No screenshot or fixture is presented as a paid provider, microphone, or operating-system notification acceptance result.
 
 The corresponding final [packaged workflow video](demo/packaged-workflow.mp4) and [packaged pearl desktop](screenshots/packaged-desktop-light.png), [graphite desktop](screenshots/packaged-desktop-dark.png), [compact preferences](screenshots/packaged-compact-preferences.png), and [accessible preferences](screenshots/packaged-accessible-preferences.png) come from the built executable. The installed Markdown guides are a build-time snapshot; this repository contains the final release verification and visual evidence.
 
-The packaged recording contains 91 native frames sampled at the target 5 fps, with an encoded duration of about 18.2 seconds and capture wall time of 22.258 seconds. Sampling delays can compress replay time; these videos are visual evidence, not rendering-performance benchmarks.
+The packaged recording uses actual native frames at the target 5 fps. Current frame count and capture wall time are in the packaged result JSON. Sampling delays can compress replay time; these videos are visual evidence, not rendering-performance benchmarks.
 
 ## Windows artifact
 

@@ -28,3 +28,5 @@ The Electron acceptance test uses an isolated application profile and a labeled 
 - [Verified portfolio evidence and CV wording](docs/PORTFOLIO.md)
 
 AI, voice, vision, operating-system notifications, and native device behavior have explicit runtime requirements. The verification record distinguishes automated local checks from provider and hardware checks that still require a real device or account.
+
+Fresh October 5 results and the original glass UI are documented in [the full audit](docs/FULL-AUDIT-2026-10-05.md). Source and rebuilt packaged desktop acceptance each pass19 groups;37 automated tests pass. Use the current `dist/release-checksums.json` for exact release bytes/hashes.
