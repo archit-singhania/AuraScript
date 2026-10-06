@@ -169,6 +169,10 @@ async function startRecording() {
 
 async function editFile(relative, content) {
   await page.waitForFunction(
+    (relative) => document.querySelector('[role="tab"][aria-selected="true"]')?.dataset.path === relative,
+    relative,
+  );
+  await page.waitForFunction(
     (relative) => window.monaco?.editor.getModels().some((model) => model.uri.path.endsWith('/' + relative)),
     relative,
   );
@@ -179,6 +183,15 @@ async function editFile(relative, content) {
     },
     { relative, content },
   );
+  // Model changes redraw the tree/tab controls. A real user types and saves
+  // from Monaco; do not send the shortcut to a detached tree button.
+  await page.evaluate((relative) => {
+    const activeEditor = monaco.editor.getEditors().find(
+      (instance) => instance.getDomNode()?.closest('#editor-host') && instance.getModel()?.uri.path.endsWith('/' + relative),
+    );
+    if (!activeEditor) throw new Error('The selected file must be attached to the visible editor');
+    activeEditor.focus();
+  }, relative);
 }
 
 async function main() {
@@ -239,10 +252,14 @@ async function main() {
     'Visible save did not persist actual file content',
   );
   checks.push('Visible Monaco edit and keyboard save persist real disk bytes');
+  await page.locator('#save-file').filter({ hasText: /^Saved$/ }).waitFor();
 
   const existing = await invoke('file:read', { path: 'src/main.py' });
   await rejected('file:create', { path: 'src/main.py', kind: 'file' }, /already exists/i);
   assert.equal(await fs.readFile(path.join(workspace, 'src', 'main.py'), 'utf8'), existing.content);
+  // Keep an actual unsaved edit before the external write. A clean buffer is
+  // allowed to refresh from disk; setting its old saved value can be a no-op.
+  await editFile('src/main.py', 'print("Reviewed public acceptance revision")\n');
   await fs.writeFile(path.join(workspace, 'src', 'main.py'), 'print("External disk revision")\n');
   await rejected(
     'file:save',
@@ -254,15 +271,15 @@ async function main() {
     'print("External disk revision")\n',
   );
   // The visible editor also stops a stale save and requires a reviewed rebase.
-  await editFile('src/main.py', 'print("Persisted public acceptance")\n');
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+s' : 'Control+s');
   await page.locator('#conflict').filter({ hasText: 'changed on disk' }).waitFor();
   await page.locator('[data-action="compare-disk"]').click();
   await page.getByRole('button', { name: 'Keep buffer on latest revision', exact: true }).click();
+  await editFile('src/main.py', 'print("Reviewed public acceptance revision")\n');
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+s' : 'Control+s');
   await waitUntil(
     () => fs.readFile(path.join(workspace, 'src', 'main.py'), 'utf8'),
-    (value) => value.includes('Persisted public acceptance'),
+    (value) => value.includes('Reviewed public acceptance revision'),
     'Reviewed editor rebase did not save the selected buffer',
   );
   checks.push('Exclusive file creation and stale-revision saves preserve existing data');
@@ -385,7 +402,7 @@ async function main() {
     'Visible Git staging did not update actual index',
   );
   const staged = await invoke('git:diff', { staged: true });
-  assert(staged.diff.includes('Persisted public acceptance'));
+  assert(staged.diff.includes('Reviewed public acceptance revision'));
   await page.locator('#git-commit-message').fill('Real AuraScript acceptance checkpoint');
   await fs.utimes(path.join(workspace, 'notes.md'), new Date(), new Date());
   await new Promise((resolve) => setTimeout(resolve, 350));
@@ -407,7 +424,7 @@ async function main() {
   assert.equal(git(workspace, ['log', '-1', '--format=%s']).trim(), 'Real AuraScript acceptance checkpoint');
   const history = await invoke('git:log');
   assert(history.commits.some((item) => item.hash === commit.hash));
-  assert((await invoke('git:diff', { commit: commit.hash })).diff.includes('Persisted public acceptance'));
+  assert((await invoke('git:diff', { commit: commit.hash })).diff.includes('Reviewed public acceptance revision'));
   checks.push('Actual Git staging, commit, log, and historical diff');
 
   await page.locator('#nav-explorer').click();
@@ -669,6 +686,10 @@ async function main() {
     () => document.documentElement.dataset.theme === 'dark' && !document.querySelector('#app.loading'),
   );
   await page.locator('#nav-explorer').click();
+  assert(
+    await page.evaluate(async () => (await document.fonts.load('500 16px "Manrope"')).length > 0),
+    'The application must load its bundled Manrope font offline',
+  );
   const darkCapture = await capture('desktop-dark.png');
   const light = await invoke('settings:update', { theme: 'light' });
   assert.equal((light.settings || light).theme, 'light');

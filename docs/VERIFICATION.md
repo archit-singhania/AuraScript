@@ -50,6 +50,8 @@ The unpacked executable passed the complete desktop journey and relaunch. Intera
 
 ## October 5 full audit
 
+For the newer palette, bundled typography and refreshed package acceptance, see [the October 6 premium refinement](PREMIUM-REFINEMENT-2026-10-06.md). The current runtime/asset comparison checks 29 files; earlier dated counts below are historical.
+
 See [the full audit](FULL-AUDIT-2026-10-05.md). Source desktop acceptance now includes 19 groups, real interactive rename/trash/restore, watcher-safe Git selections, and disabled Stop after process exit. Provider timeouts and output limits persist failed partial responses; output history stays bounded. Node tests: 37 passed, no failures. The advisory check reported zero vulnerabilities.
 
 The October 3 qwen3:8b evidence remains historical. On October 5, the local Ollama endpoint was unavailable and the prior executable/model manifests were absent. No models were downloaded. Start/install your chosen local engine and rerun the explicit local-model/session commands for fresh inference acceptance. Cloud voice/vision and physical devices remain manual gates. Current packaged results and artifact hashes live in the machine-readable release manifest; packaged documentation is a build-time snapshot.
