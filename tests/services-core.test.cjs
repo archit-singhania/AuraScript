@@ -19,7 +19,10 @@ async function fixture(t) {
   });
   t.after(async () => {
     await service.dispose();
-    fs.rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    const relative = path.relative(os.tmpdir(), directory);
+    assert(!relative.startsWith('..') && !path.isAbsolute(relative) && path.basename(directory).startsWith('aura-service-'));
+    // Async removal lets pending Windows watcher-close events release their handles.
+    await fs.promises.rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   });
   await service.invoke('workspace:open', { path: root });
   return { directory, root, service, events };
@@ -96,7 +99,8 @@ test('retained trash survives restart and restore cannot overwrite an occupied p
 });
 test('private data persists and encrypted keys are absent from bootstrap and export', async (t) => {
   const { directory, service } = await fixture(t);
-  await service.invoke('settings:update', { theme: 'dark', timezone: 'Asia/Kolkata' });
+  await service.invoke('settings:update', { theme: 'dark', collection: 'lagoon', timezone: 'Asia/Kolkata' });
+  await assert.rejects(service.invoke('settings:update', { collection: 'unknown' }), /collection/);
   await service.invoke('secret:set', { provider: 'openai', key: 'private-fixture-key' });
   await service.invoke('memory:save', { title: 'Style', content: 'Use readable names' });
   await service.invoke('documents:import', {
@@ -121,6 +125,7 @@ test('private data persists and encrypted keys are absent from bootstrap and exp
   t.after(() => restarted.dispose());
   assert.equal((await restarted.invoke('memory:list'))[0].content, 'Use readable names');
   assert.equal((await restarted.invoke('settings:get')).theme, 'dark');
+  assert.equal((await restarted.invoke('settings:get')).collection, 'lagoon');
 });
 test('imports use confirmation, preserve existing data, and disable imported reminders', async (t) => {
   const { service } = await fixture(t);

@@ -1,4 +1,5 @@
 import { VoiceInput, stopSpeech, speak, voiceAvailability } from './voice.js';
+import { reveal, reducedMotion, setMotionPreference } from './motion.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -63,6 +64,7 @@ const date = (value) => (value ? new Date(value).toLocaleString() : '');
 const state = {
   settings: {
     theme: 'system',
+    collection: 'amethyst',
     fontSize: 14,
     minimap: true,
     wordWrap: false,
@@ -111,6 +113,7 @@ let editor,
 const modelListeners = new Map();
 let paletteCommands = [],
   paletteIndex = 0;
+let paintedConversation = null, paintedMessageCount = 0;
 
 function toast(message, type = 'good', duration = 5500) {
   const node = document.createElement('div');
@@ -131,12 +134,16 @@ function applySettings() {
   const chosen =
     s.theme === 'system' ? (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light') : s.theme;
   document.documentElement.dataset.theme = chosen;
+  document.documentElement.dataset.collection = ['amethyst', 'lagoon', 'copper'].includes(s.collection) ? s.collection : 'amethyst';
+  setMotionPreference(s.reducedMotion);
   document.documentElement.dataset.reduceMotion = Boolean(s.reducedMotion);
   document.documentElement.dataset.reduceTransparency = Boolean(s.reducedTransparency);
   document.documentElement.dataset.highContrast = Boolean(s.highContrast);
   document.documentElement.style.setProperty('--scale', s.uiScale || 1);
   if (monaco) {
-    monaco.editor.setTheme(chosen === 'light' ? 'aura-light' : 'aura-dark');
+    monaco.editor.setTheme(s.highContrast || matchMedia('(forced-colors: active)').matches
+      ? chosen === 'light' ? 'hc-light' : 'hc-black'
+      : chosen === 'light' ? 'aura-light' : 'aura-dark');
     editor?.updateOptions({
       fontSize: Number(s.fontSize) || 14,
       lineHeight: Math.round((Number(s.fontSize) || 14) * 1.65),
@@ -145,8 +152,8 @@ function applySettings() {
       wordWrap: s.wordWrap ? 'on' : 'off',
       minimap: { enabled: s.minimap !== false },
       accessibilitySupport: 'auto',
-      smoothScrolling: !s.reducedMotion,
-      cursorSmoothCaretAnimation: s.reducedMotion ? 'off' : 'on',
+      smoothScrolling: !reducedMotion(),
+      cursorSmoothCaretAnimation: reducedMotion() ? 'off' : 'on',
     });
   }
   const toggle = $('#theme-toggle');
@@ -183,6 +190,7 @@ function shell() {
   applySettings();
 }
 function setView(view) {
+  const changed = state.view !== view;
   state.view = view;
   $('#editor-layout').classList.toggle('hidden', view !== 'editor');
   $('#page').classList.toggle('hidden', view === 'editor');
@@ -192,6 +200,7 @@ function setView(view) {
   if (view === 'editor') {
     editor?.layout();
   } else renderPage();
+  if (changed) reveal(view === 'editor' ? $('#editor-toolbar') : $('#page'));
   persistSession();
 }
 function nav(view) {
@@ -359,12 +368,19 @@ function renderSidebar() {
   if (!side) return;
   side.setAttribute('aria-label', `${state.sidebar} sidebar`);
   if (state.sidebar === 'explorer') {
-    side.innerHTML = `<div class="pane-head"><span class="pane-title grow">Explorer</span>${button('new-file', '', { id: 'new-file', className: 'icon-button ghost', iconName: 'plus', title: 'Create file or folder' })}${button('refresh-tree', '', { className: 'icon-button ghost', iconName: 'refresh', title: 'Refresh files' })}</div><div class="pane-body tree" id="file-tree">${state.workspace ? treeRows() || '<div class="tree-empty">This workspace is empty.<br>Create your first file to begin.</div>' : '<div class="tree-empty">Choose a local folder to open your workspace. Files stay on your computer.</div>'}</div><div class="sidebar-footer"><div class="ellipsis" title="${attr(state.workspace || '')}">${esc(state.workspace || 'A quiet place to build.')}</div>${button('recent-workspaces', 'Recent workspaces', { id: 'recent-workspaces', className: 'ghost small' })}${button('trash-list', 'Restore deleted files', { id: 'open-trash', className: 'ghost small' })}</div>`;
+    const tree = side.dataset.paneView === 'explorer' && $('#file-tree', side);
+    if (tree) {
+      tree.innerHTML = state.workspace ? treeRows() || '<div class="tree-empty">This workspace is empty.<br>Create your first file to begin.</div>' : '<div class="tree-empty">Choose a local folder to open your workspace. Files stay on your computer.</div>';
+      const label = $('.sidebar-footer .ellipsis', side);
+      label.textContent = state.workspace || 'A quiet place to build.';
+      label.title = state.workspace || '';
+    } else side.innerHTML = `<div class="pane-head"><span class="pane-title grow">Explorer</span>${button('new-file', '', { id: 'new-file', className: 'icon-button ghost', iconName: 'plus', title: 'Create file or folder' })}${button('refresh-tree', '', { className: 'icon-button ghost', iconName: 'refresh', title: 'Refresh files' })}</div><div class="pane-body tree" id="file-tree">${state.workspace ? treeRows() || '<div class="tree-empty">This workspace is empty.<br>Create your first file to begin.</div>' : '<div class="tree-empty">Choose a local folder to open your workspace. Files stay on your computer.</div>'}</div><div class="sidebar-footer"><div class="ellipsis" title="${attr(state.workspace || '')}">${esc(state.workspace || 'A quiet place to build.')}</div>${button('recent-workspaces', 'Recent workspaces', { id: 'recent-workspaces', className: 'ghost small' })}${button('trash-list', 'Restore deleted files', { id: 'open-trash', className: 'ghost small' })}</div>`;
   } else if (state.sidebar === 'search') {
     side.innerHTML = `<div class="pane-head"><span class="pane-title grow">Find in workspace</span>${button('refresh-search', '', { className: 'icon-button ghost', iconName: 'refresh', title: 'Run search' })}</div><form id="search-form" class="search-controls"><label class="sr-only" for="search-query">Find text</label><input id="search-query" placeholder="Find literal text" value="${attr(state.search.query)}"><label class="sr-only" for="search-replacement">Replace with</label><input id="search-replacement" placeholder="Replace with" value="${attr(state.search.replacement)}"><label class="row small"><input type="checkbox" id="search-case" ${state.search.caseSensitive ? 'checked' : ''}> Match case</label><div class="row"><button type="submit" class="primary grow">Find</button>${button('replace-search', 'Replace selected', { id: 'replace-search', className: 'grow' })}</div><div class="small muted">Literal search • selected matches only • revision checked</div></form><div class="pane-body" style="padding:0" id="search-results">${renderSearchMatches()}</div>`;
   } else if (state.sidebar === 'git') {
     side.innerHTML = `<div class="pane-head"><span class="pane-title grow">Source control</span>${button('refresh-git', '', { className: 'icon-button ghost', iconName: 'refresh', title: 'Refresh Git' })}</div><div class="pane-body" id="git-panel" style="padding:0">${renderGit()}</div>`;
   }
+  side.dataset.paneView = state.sidebar;
   if (focusId) {
     const restored = document.getElementById(focusId);
     if (restored && side.contains(restored)) {
@@ -565,6 +581,7 @@ async function openFile(path, line, column = 1) {
   document.body.classList.remove('sidebar-mobile-open');
 }
 function activateFile(path) {
+  const changed = state.activeFile !== path;
   if (editor) {
     const previous = state.files.get(state.activeFile);
     if (previous) previous.viewState = editor.saveViewState();
@@ -579,6 +596,7 @@ function activateFile(path) {
   setView('editor');
   renderTabs();
   renderToolbar();
+  if (changed) reveal($('#editor-toolbar'), 'file');
   renderSidebar();
   renderProblems();
   persistSession();
@@ -800,6 +818,7 @@ async function reloadFile() {
   f.external = false;
   renderTabs();
   persistSession();
+  editor?.focus();
 }
 async function compareDisk() {
   const f = state.files.get(state.activeFile);
@@ -825,6 +844,7 @@ async function compareDisk() {
       toast('Buffer rebased. Review and Save to write it.', 'warning');
     }
   });
+  editor?.focus();
 }
 async function checkDiagnostics() {
   const f = state.files.get(state.activeFile);
@@ -901,6 +921,7 @@ function dialog({
       finish(formData);
     };
     d.showModal();
+    reveal(d, 'sheet');
     const input = $('input,textarea,select', d);
     if (input) setTimeout(() => input.focus(), 0);
   });
@@ -941,6 +962,7 @@ async function guard(fn) {
 function renderBottom() {
   const panel = $('#bottom-panel');
   if (!panel) return;
+  const opened = panel.classList.contains('hidden') && state.bottomOpen;
   panel.classList.toggle('hidden', !state.bottomOpen);
   panel.innerHTML = `<div class="bottom-head">${button('bottom:terminal', 'Terminal', { id: 'show-terminal', className: state.bottom === 'terminal' ? 'active' : '' })}${button('bottom:diagnostics', `Problems <span class="badge">${problems().length}</span>`, { className: state.bottom === 'diagnostics' ? 'active' : '' })}<span class="grow"></span>${
     state.bottom === 'terminal'
@@ -956,6 +978,7 @@ function renderBottom() {
       : ''
   }${button('close-bottom', '', { className: 'icon-button ghost', iconName: 'close', title: 'Close bottom panel' })}</div><div id="bottom-content" class="${state.bottom === 'terminal' ? 'terminal-body' : 'grow'}">${state.bottom === 'terminal' ? terminalOutput() : ''}</div>${state.bottom === 'terminal' ? `<form id="terminal-form" class="terminal-input"><span class="prompt">›</span><label class="sr-only" for="terminal-command">Terminal command</label><input id="terminal-command" autocomplete="off" spellcheck="false" placeholder="Run a command in this workspace…" ${state.workspace ? '' : 'disabled'}><button type="submit" class="primary" id="terminal-run">Run</button></form>` : ''}`;
   if (state.bottom === 'diagnostics') renderProblems();
+  if (opened) reveal(panel);
 }
 function terminalOutput() {
   const p = state.processes.get(state.activeProcess);
@@ -1117,16 +1140,38 @@ function formatMessage(text) {
 function renderAssistant(scroll = true) {
   const content = $('#assistant-content');
   if (!content) return;
+  const sameConversation = paintedConversation === state.conversationId;
+  const follow = !sameConversation || content.scrollTop + content.clientHeight >= content.scrollHeight - 60;
+  const firstNew = sameConversation ? paintedMessageCount : state.messages.length;
   if (!state.messages.length) {
     content.innerHTML = `<div class="chat-empty"><div class="eyebrow">Your coding companion</div><h2>Make room for your next good idea.</h2><p>Ask a question, review a selection, or reason through a change. Choose a local or cloud provider in Preferences. Attached context is always visible.</p>${button('suggest:review', 'Review the current file', { className: 'suggestion' })}${button('suggest:explain', 'Help me understand this code', { className: 'suggestion' })}${button('nav:settings', 'Set up my AI provider', { className: 'suggestion' })}<p class="small">AI proposals require your review. Commands run only with your approval.</p></div>`;
-  } else
-    content.innerHTML = state.messages
+  } else {
+    const markup = state.messages
       .map(
         (m, i) =>
           `<article class="chat-message ${attr(m.role || 'assistant')} ${m.error ? 'error' : ''}" data-testid="chat-message"><div class="message-label">${m.role === 'user' ? 'You' : 'Aura'} ${m.streaming ? '<span class="spinner"></span>' : ''}<span class="message-time">${esc(date(m.createdAt || m.timestamp))}</span></div><div class="message-text">${formatMessage(m.content ?? m.text ?? '')}</div>${m.proposals?.map((p, j) => `<div class="proposal"><h3>${esc(p.path || p.title || 'Proposed change')}</h3><p>${esc(p.summary || 'Review the complete replacement before applying. This proposal is untrusted AI output.')}</p><div class="row">${button('proposal-review', 'Review patch', { data: `data-message="${i}" data-index="${j}"` })}<span class="badge">No automatic execution</span></div></div>`).join('') || ''}${m.role !== 'user' && !m.streaming && !m.error ? `<div class="row" style="margin-top:8px">${button('speak-message', 'Read aloud', { className: 'ghost small', data: `data-index="${i}"` })}${button('copy-message', 'Copy', { className: 'ghost small', data: `data-index="${i}"` })}</div>` : ''}</article>`,
       )
       .join('');
-  if (scroll) content.scrollTop = state.messages.length ? content.scrollHeight : 0;
+    const fragment = document.createElement('template');
+    fragment.innerHTML = markup;
+    const desired = [...fragment.content.children];
+    const existing = [...content.querySelectorAll('.chat-message')];
+    if (sameConversation && existing.length && existing.length <= desired.length) {
+      desired.forEach((node, index) => {
+        const retained = existing[index];
+        if (retained) {
+          retained.className = node.className;
+          if (retained.innerHTML !== node.innerHTML) retained.innerHTML = node.innerHTML;
+        } else { content.append(node); reveal(node, 'file'); }
+      });
+    } else {
+      content.replaceChildren(...desired);
+      desired.slice(firstNew).forEach((node) => reveal(node, 'file'));
+    }
+  }
+  paintedConversation = state.conversationId;
+  paintedMessageCount = state.messages.length;
+  if (scroll && follow) content.scrollTop = state.messages.length ? content.scrollHeight : 0;
   const running = !!state.turnId;
   $('#send-message').classList.toggle('hidden', running);
   $('#stop-generation').classList.toggle('hidden', !running);
@@ -1571,7 +1616,8 @@ function renderSettings() {
         ['dark', 'Graphite'],
         ['light', 'Pearl'],
       ],
-    )}<div class="setting-row"><label for="setting-fontSize"><strong>Editor text size</strong><small>10–32 px. Ctrl + mouse wheel also adjusts the editor.</small></label><input id="setting-fontSize" data-setting="fontSize" type="number" min="10" max="32" value="${s.fontSize || 14}"></div>${selectSetting(
+    )}
+${selectSetting('collection', 'Design collection', 'Coordinated accents for both light and dark appearances.', [['amethyst', 'Amethyst · editorial'], ['lagoon', 'Lagoon · mineral'], ['copper', 'Copper · atelier']])}<div class="setting-row"><label for="setting-fontSize"><strong>Editor text size</strong><small>10–32 px. Ctrl + mouse wheel also adjusts the editor.</small></label><input id="setting-fontSize" data-setting="fontSize" type="number" min="10" max="32" value="${s.fontSize || 14}"></div>${selectSetting(
       'tabSize',
       'Indentation',
       'Spaces in one indentation level.',
@@ -1769,8 +1815,9 @@ async function toggleTheme() {
   if (state.view === 'settings') renderSettings();
 }
 function toggleBottom(tab) {
+  const switching = !!tab && state.bottom !== tab;
   state.bottom = tab || state.bottom;
-  state.bottomOpen = !state.bottomOpen || state.bottom !== tab;
+  state.bottomOpen = switching || !state.bottomOpen;
   setView('editor');
   renderBottom();
   persistSession();
@@ -2400,6 +2447,8 @@ async function boot() {
   }
 }
 boot();
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', applySettings);
+matchMedia('(forced-colors: active)').addEventListener('change', applySettings);
 
 // Pointer highlights update only the floating interaction material, at most once per frame.
 (() => {

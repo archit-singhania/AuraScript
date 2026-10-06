@@ -1,5 +1,7 @@
 # AuraScript
 
+See [the current motion and design collections](docs/PREMIUM-MOTION-2026-10-06.md) for visual expectations, accessibility and manual inspection of the refreshed app.
+
 AuraScript is a standalone desktop coding workspace built with Electron, Monaco, and a local persistence layer. Its glass navigation, focused editor, searchable project files, streaming terminal, Git tools, and assistant share one application. It does not require the Wednesday or Jarvis backend.
 
 Install Node.js 22.12 or later and Git. Python 3 is optional for Python syntax checks. To enable local AI, install Ollama separately, start it, and download a model that fits your machine. Cloud models require your own provider key; unavailable providers return a visible error.

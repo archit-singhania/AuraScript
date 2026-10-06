@@ -2,6 +2,8 @@
 
 This file records executed checks for the new standalone repository. It does not reuse acceptance results from the earlier editor under JarvisAI.
 
+The latest [motion and collection refinement](PREMIUM-MOTION-2026-10-06.md) passed 37 Node tests and 21 groups each in source and rebuilt Windows package, with zero renderer exceptions. All 30 runtime/asset files match current source. The packaged run includes actual operating-system reduced-motion cancellation; prior source results exercised saved reduction and bounded pane animation. Current hashes are in `dist/release-checksums.json`; older dated tables below retain their historical scope.
+
 ## Fresh local audit on 2026-10-05, with dated historical inference
 
 | Check | Result | Evidence |

@@ -275,6 +275,7 @@ async function main() {
   await page.locator('#conflict').filter({ hasText: 'changed on disk' }).waitFor();
   await page.locator('[data-action="compare-disk"]').click();
   await page.getByRole('button', { name: 'Keep buffer on latest revision', exact: true }).click();
+  await page.locator('#conflict').waitFor({ state: 'hidden' });
   await editFile('src/main.py', 'print("Reviewed public acceptance revision")\n');
   await page.keyboard.press(process.platform === 'darwin' ? 'Meta+s' : 'Control+s');
   await waitUntil(
@@ -614,6 +615,30 @@ async function main() {
   checks.push('Reviewed real patch preview/apply and stale-patch rejection');
 
   await page.locator('#nav-settings').click();
+  await page.locator('#setting-collection').selectOption('lagoon');
+  await waitUntil(() => invoke('settings:get'), (value) => value.collection === 'lagoon', 'Design collection was not persisted');
+  await page.waitForFunction(() => document.documentElement.dataset.collection === 'lagoon');
+  const movingPane = await page.evaluate(() => {
+    document.querySelector('#nav-memory').click();
+    const animation = document.querySelector('#page').getAnimations()[0];
+    return animation ? { duration: animation.effect.getComputedTiming().duration, state: animation.playState } : null;
+  });
+  assert(movingPane && movingPane.duration > 0 && movingPane.duration <= 320 && movingPane.state === 'running');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForFunction(() => document.querySelector('#page').getAnimations().length === 0);
+  const systemImmediate = await page.evaluate(() => {
+    document.querySelector('#nav-settings').click();
+    return document.querySelector('#page').getAnimations().length;
+  });
+  assert.equal(systemImmediate, 0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.waitForFunction(() => document.querySelector('#page').getAnimations().length === 0);
+  await page.locator('#nav-settings').click();
+  await page.reload();
+  await page.waitForFunction(() => !document.querySelector('#app.loading') && document.documentElement.dataset.collection === 'lagoon');
+  await page.locator('#nav-settings').click();
+  assert.equal(await page.locator('#setting-collection').inputValue(), 'lagoon');
+  checks.push('Real bounded pane animation settles, OS reduced motion cancels it, and curated collection persists through actual reload');
   await page.locator('#provider').selectOption('ollama');
   await page.locator('#field-model').fill('unavailable-fixture-model');
   await page.locator('#field-endpoint').fill('http://127.0.0.1:9');
@@ -729,6 +754,22 @@ async function main() {
       document.documentElement.dataset.highContrast === 'true',
   );
   await capture('accessible-preferences.png');
+  const immediatePane = await page.evaluate(() => {
+    document.querySelector('#nav-memory').click();
+    return document.querySelector('#page').getAnimations().length;
+  });
+  assert.equal(immediatePane, 0);
+  const editorOptions = await page.evaluate(() => {
+    const modelEditor = monaco.editor.getEditors().find((item) => item.getModel());
+    return { smooth: modelEditor.getOption(monaco.editor.EditorOption.smoothScrolling), theme: monaco.editor.getTheme?.() };
+  });
+  assert.equal(editorOptions.smooth, false);
+  await page.locator('#nav-settings').click();
+  await page.locator('#setting-collection').selectOption('copper');
+  await waitUntil(() => invoke('settings:get'), (value) => value.collection === 'copper', 'Second collection was not persisted');
+  await page.waitForFunction(() => document.documentElement.dataset.collection === 'copper');
+  await capture('collection-copper-accessible.png');
+  checks.push('Reduced-motion pane changes stay immediate and actual editor smooth scrolling is disabled');
   await invoke('settings:update', {
     reducedMotion: false,
     reducedTransparency: false,
@@ -762,6 +803,7 @@ async function main() {
   });
   assert.equal((await invoke('bootstrap')).currentWorkspace, workspace);
   assert.equal((await invoke('settings:get')).theme, 'light');
+  assert.equal((await invoke('settings:get')).collection, 'copper');
   assert.equal((await invoke('memory:list')).length, 2);
   assert((await invoke('documents:list')).some((item) => item.name === document.name));
   assert(

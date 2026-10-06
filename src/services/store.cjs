@@ -7,6 +7,7 @@ const defaults = () => ({
   version: 1,
   settings: {
     theme: 'system',
+    collection: 'amethyst',
     fontSize: 14,
     fontFamily: 'Cascadia Code, Consolas, monospace',
     tabSize: 2,

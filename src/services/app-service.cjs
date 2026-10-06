@@ -481,6 +481,7 @@ class AppService {
   updateSettings(payload) {
     const allowed = new Set([
       'theme',
+      'collection',
       'fontSize',
       'fontFamily',
       'tabSize',
@@ -518,6 +519,8 @@ class AppService {
         throw new Error(`${key} must be true or false.`);
     if ('theme' in updates && !['light', 'dark', 'system'].includes(updates.theme))
       throw new Error('Choose light, dark, or system theme.');
+    if ('collection' in updates && !['amethyst', 'lagoon', 'copper'].includes(updates.collection))
+      throw new Error('Choose the Amethyst, Lagoon, or Copper collection.');
     for (const key of ['fontFamily', 'model', 'voiceModel', 'visionModel'])
       if (key in updates && (typeof updates[key] !== 'string' || updates[key].length > 200))
         throw new Error(`${key} must be text shorter than 200 characters.`);
