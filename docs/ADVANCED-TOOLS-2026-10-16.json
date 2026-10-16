@@ -1,0 +1,57 @@
+{
+  "checkedAt": "2026-10-16T12:31:40.861942+00:00",
+  "sourceRegression": {
+    "passed": 54,
+    "skipped": 0
+  },
+  "packagedNewJourneys": [
+    "architecture",
+    "languages",
+    "tests",
+    "debugger",
+    "transactions"
+  ],
+  "existingPackagedRegression": true,
+  "packageSourceMatch": {
+    "checkedAt": "2026-10-16T12:31:40.572Z",
+    "checked": 104,
+    "mismatched": [],
+    "privateEntries": []
+  },
+  "artifacts": [
+    {
+      "path": "dist/AuraScript Setup 3.0.0.exe",
+      "bytes": 124153421,
+      "sha256": "d65a6f12d1585cd8f4a5afe6e735a491204e9e62e254865c62b671ee5ce8a25c"
+    },
+    {
+      "path": "dist/win-unpacked/AuraScript.exe",
+      "bytes": 245726208,
+      "sha256": "6fbccab5197d072238e7985f8bb21ea65f5a37285c437c0024e736ca374cff21"
+    },
+    {
+      "path": "dist/win-unpacked/resources/app.asar",
+      "bytes": 16630545,
+      "sha256": "73c84c168a48db7832e2e303dcd740b1e4bdb9c9002d8421218e5ef07c215b5d"
+    }
+  ],
+  "limits": [
+    "Unsigned local Windows distribution; installer installation on another device not verified",
+    "Physical microphone, live providers, macOS/Linux and signing not verified",
+    "Static indexing cannot infer runtime dependencies; out-of-workspace package references remain unresolved"
+  ],
+  "cleanup": [
+    "architecture-20261016",
+    "debugger-20261016-1792130010918",
+    "debugger-20261016-1792148107197",
+    "languages-20261016",
+    "languages-20261016-1792128237601",
+    "languages-20261016-1792148086498",
+    "tests-20261016-1792128529978",
+    "tests-20261016-1792128588602",
+    "tests-20261016-1792128623588",
+    "tests-20261016-1792148096928",
+    "transactions-20261016-1792130024465",
+    "transactions-20261016-1792148112848"
+  ]
+}

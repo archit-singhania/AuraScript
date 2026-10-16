@@ -57,21 +57,22 @@ class Architecture{
         const rel=relative?relative+'/'+entry.name:entry.name;
         if(entry.isDirectory()){await walk(rel,depth+1);continue;}
         if(!entry.isFile())continue;
-        if(!SOURCE.test(entry.name)&&!['tsconfig.json','jsconfig.json','pyrightconfig.json'].includes(entry.name))continue;
-        if(rows.length>=1500||bytes>=12*1024*1024){truncated=true;return;}
+        if(!SOURCE.test(entry.name)&&!entry.name.endsWith('.json'))continue;
+        if(rows.length>=1500||configs.size>=500||bytes>=12*1024*1024){truncated=true;return;}
         try{const source=await this.workspace.read({path:rel});bytes+=Buffer.byteLength(source.content);if(SOURCE.test(entry.name))rows.push(source);else configs.set(source.path,source.content);}catch{warnings.push('Skipped unreadable or binary source: '+rel);}
       }
     };await walk();
     const files=new Set(rows.map(r=>path.resolve(root,r.path))),byPath=new Map(rows.map(r=>[r.path,r]));
     const safe=filename=>{try{return this.workspace.resolve(path.relative(root,filename),true);}catch{return null;}};
-    const host={fileExists:f=>files.has(path.resolve(f)),readFile:f=>undefined,directoryExists:d=>!!safe(d),getCurrentDirectory:()=>root,realpath:f=>f};
+    const configText=f=>configs.get(path.relative(root,path.resolve(f)).replaceAll('\\','/'));
+    const host={fileExists:f=>files.has(path.resolve(f))||configText(f)!==undefined,readFile:configText,directoryExists:d=>!!safe(d),getCurrentDirectory:()=>root,realpath:f=>f};
     const optionsCache=new Map();
     const optionsFor=(rel)=>{
       let dir=path.posix.dirname(rel);
       for(;;){const prefix=dir==='.'?'':dir+'/';const key=['tsconfig.json','jsconfig.json'].map(n=>prefix+n).find(n=>configs.has(n));
         if(key){if(!optionsCache.has(key)){const parsed=ts.parseConfigFileTextToJson(key,configs.get(key));
           if(parsed.error){warnings.push('Malformed config: '+key);optionsCache.set(key,{});}
-          else{if(parsed.config.extends)warnings.push('Config extends is not followed: '+key);const converted=ts.convertCompilerOptionsFromJson(parsed.config.compilerOptions||{},path.resolve(root,prefix));optionsCache.set(key,converted.options);}}
+          else{const inherited=ts.parseJsonConfigFileContent(parsed.config,{...host,useCaseSensitiveFileNames:process.platform!=='win32',readDirectory:()=>[]},path.resolve(root,prefix),{},path.resolve(root,key));for(const error of inherited.errors||[]){if(error.code!==18003)warnings.push('Config '+key+': '+ts.flattenDiagnosticMessageText(error.messageText,' '));}optionsCache.set(key,inherited.options);}}
           return optionsCache.get(key);}
         if(dir==='.')break;dir=path.posix.dirname(dir);
       }return {allowJs:true,moduleResolution:ts.ModuleResolutionKind.Bundler,module:ts.ModuleKind.ESNext};

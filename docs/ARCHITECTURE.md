@@ -61,3 +61,7 @@ The OpenAI-compatible streaming adapter follows the documented [streaming respon
 Node tests exercise pure boundaries and real service behavior in temporary directories. Electron acceptance runs both source and packaged applications against a copied public fixture repository and a fresh application profile. It asserts actual disk content, Git commits, process exits, saved local data, and visible light/dark rendering.
 
 Fixtures, screenshots, and results are separate from normal user data. [Verification](VERIFICATION.md) records exact checks and open hardware/provider/platform gates.
+
+## Advanced developer services
+
+Validated main-process IPC owns DAP adapters, LSP servers, test processes, physical unpacked helper paths, architecture indexes and registered Git patch worktrees. The renderer receives bounded typed events and editor operations. Selected interpreters and explicit workspace trust precede execution. DAP endpoints bind only loopback. Test and debug cancellation terminate owned process trees. Patch journals bind original revisions, review digest and approved checks; failed writes roll back without replacing concurrent user edits. Static architecture parsing reads only scanned owned files/configuration and never imports project Python modules.

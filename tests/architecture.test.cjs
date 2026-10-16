@@ -20,3 +20,9 @@ test('Python AST is opt-in, relative/from imports resolve without importing modu
   const interpreter=process.env.AURA_PYTHON_TEST;if(!interpreter){t.skip('Explicit test interpreter not configured');return;}
   const result=await service.invoke('architecture:index',{confirmedParser:true,pythonInterpreter:interpreter});assert.equal(result.pythonStatus,'available');assert(result.cycles.some(c=>c.includes('pkg/a.py')&&c.includes('pkg/b.py')));assert(!result.edges.some(e=>e.specifier==='fake'));
 });
+
+test('owned inherited TypeScript paths resolve without outside configuration access',async t=>{
+  const {root,service}=await fixture(t);fs.mkdirSync(path.join(root,'src'));fs.writeFileSync(path.join(root,'base.json'),JSON.stringify({compilerOptions:{baseUrl:'.',paths:{'@/*':['src/*']},moduleResolution:'bundler',module:'esnext'}}));fs.writeFileSync(path.join(root,'tsconfig.json'),JSON.stringify({extends:'./base.json'}));fs.writeFileSync(path.join(root,'src/a.ts'),"import {b} from '@/b';");fs.writeFileSync(path.join(root,'src/b.ts'),'export const b=1;');
+  let result=await service.invoke('architecture:index',{});assert(result.edges.some(e=>e.specifier==='@/b'&&e.target==='src/b.ts'));
+  fs.writeFileSync(path.join(root,'tsconfig.json'),JSON.stringify({extends:'../../private.json'}));result=await service.invoke('architecture:index',{});assert(result.warnings.some(w=>w.includes('Config')));assert(!result.edges.some(e=>e.specifier==='@/b'&&e.target));
+});

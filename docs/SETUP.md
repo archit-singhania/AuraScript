@@ -2,7 +2,7 @@
 
 ## Development
 
-Use Node.js 22.12 or later, npm, and Git. The repository pins Electron, Monaco, the build tools, and transitive security overrides in its lockfile.
+Use Node.js 22.22.2 or later, npm, and Git. The repository pins Electron, Monaco, the build tools, and transitive security overrides in its lockfile.
 
 ```powershell
 npm ci
@@ -51,3 +51,5 @@ AuraScript uses its own `AuraScriptStudio` profile and does not share the old We
 Use the versioned export/import interface for portable application data. Exports exclude provider secrets and unrestricted absolute workspace paths. A preview identifies the data that will be imported before applying it.
 
 `AURA_TEST_DATA` and `AURA_HEADLESS=1` are used by isolated automated tests. Do not set `AURA_TEST_DATA` to your normal profile when running tests.
+
+Advanced debugger, language services, tests, transactions and architecture setup: [manual guide](ADVANCED-TOOLS-2026-10-16.md).
