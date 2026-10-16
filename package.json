@@ -7,7 +7,7 @@
   "license": "MIT",
   "main": "src/main.cjs",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.22.2"
   },
   "scripts": {
     "start": "electron .",
@@ -91,7 +91,12 @@
       "target": "AppImage",
       "icon": "assets/icon.png",
       "category": "Development"
-    }
+    },
+    "asarUnpack": [
+      "src/services/*.py",
+      "src/adapters/**/*",
+      "node_modules/**/*"
+    ]
   },
   "dependencies": {
     "@jridgewell/trace-mapping": "0.3.31",

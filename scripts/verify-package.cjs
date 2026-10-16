@@ -11,9 +11,9 @@ for (const entry of files) {
   const local = path.join(root, relative);
   if (!fs.statSync(local).isFile()) continue;
   checked.push(relative);
-  if (!fs.readFileSync(local).equals(asar.extractFile(archive, relative.split('/').join(path.sep)))) mismatched.push(relative);
+  if (!fs.readFileSync(local).equals((asar.statFile(archive,relative.split('/').join(path.sep)).unpacked?fs.readFileSync(path.join(archive+'.unpacked',relative)):asar.extractFile(archive, relative.split('/').join(path.sep))))) mismatched.push(relative);
 }
-const privateEntries = files.filter(entry => /\.env|\.runtime|test-results|state\.json|node_modules/.test(entry));
+const privateEntries = files.filter(entry => /(?:^|[\\/])(?:\.env(?:[.\\/]|$)|\.runtime|test-results|state\.json)(?:[\\/]|$)/.test(entry));
 const result = {checkedAt: new Date().toISOString(), checked: checked.length, mismatched, privateEntries};
 fs.mkdirSync(path.join(root, 'test-results'), {recursive: true});
 fs.writeFileSync(path.join(root, 'test-results/package-source-match.json'), JSON.stringify(result, null, 2) + '\n');

@@ -1,3 +1,4 @@
+const {diskPath}=require('./runtime-path.cjs');
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),net=require('node:net'),crypto=require('node:crypto'),{spawn}=require('node:child_process');
 const {execute}=require('./processes.cjs');
@@ -32,7 +33,7 @@ class Debugger{
     if(language==='python'){
       child=spawn(config.pythonInterpreter||'python',['-m','debugpy.adapter'],{cwd:root,windowsHide:true,detached:process.platform!=='win32',env:{...process.env,PYTHONDONTWRITEBYTECODE:'1'},stdio:['pipe','pipe','pipe']});return {child,input:child.stdout,outputPipe:child.stdin};
     }
-    const script=path.join(__dirname,'../adapters/js-debug/src/dapDebugServer.js');if(!fs.existsSync(script))throw new Error('Bundled JavaScript debug adapter is missing');
+    const script=diskPath(path.join(__dirname,'../adapters/js-debug/src/dapDebugServer.js'));if(!fs.existsSync(script))throw new Error('Bundled JavaScript debug adapter is missing');
     child=spawn(process.execPath,[script,'0','127.0.0.1'],{cwd:root,windowsHide:true,detached:process.platform!=='win32',env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:['ignore','pipe','pipe']});
     try{port=await new Promise((resolve,reject)=>{let text='';const timer=setTimeout(()=>reject(new Error('JavaScript adapter did not open its local endpoint')),15000);child.on('error',()=>{clearTimeout(timer);reject(new Error('JavaScript adapter unavailable'));});child.once('close',()=>{clearTimeout(timer);reject(new Error('JavaScript adapter stopped before startup'));});child.stdout.setEncoding('utf8').on('data',c=>{text=(text+c).slice(-8192);const m=text.match(/Debug server listening at 127\.0\.0\.1:(\d+)/);if(m){clearTimeout(timer);resolve(Number(m[1]));}});});}
     catch(e){child.kill();throw e;}

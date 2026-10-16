@@ -1,3 +1,4 @@
+const {diskPath}=require('./runtime-path.cjs');
 'use strict';
 const fs=require('node:fs'),fsp=fs.promises,path=require('node:path'),crypto=require('node:crypto'),{spawn}=require('node:child_process');
 const {atomicWrite}=require('./store.cjs');
@@ -24,9 +25,9 @@ class TestTools{
     let program,args;
     if(payload.runner==='pytest'){
       program=payload.pythonInterpreter||'python';if(typeof program!=='string'||!program||program.length>1024)throw new Error('Select an installed Python interpreter');
-      const request=path.join(this.directory,id+'.request.json');atomicWrite(request,JSON.stringify({root,mode:payload.mode,ids:payload.mode==='run'?(selection.length?selection:catalog.map(c=>c.id)):[],coverage:payload.coverage===true,coverage_data:path.join(this.directory,id+'.coverage'),coverage_output:coverageOutput,output}));args=['-I',path.join(__dirname,'pytest-adapter.py'),request];
+      const request=path.join(this.directory,id+'.request.json');atomicWrite(request,JSON.stringify({root,mode:payload.mode,ids:payload.mode==='run'?(selection.length?selection:catalog.map(c=>c.id)):[],coverage:payload.coverage===true,coverage_data:path.join(this.directory,id+'.coverage'),coverage_output:coverageOutput,output}));args=['-I',diskPath(path.join(__dirname,'pytest-adapter.py')),request];
     }else{
-      program=process.execPath;const cli=path.join(path.dirname(require.resolve('vitest/package.json')),'vitest.mjs');
+      program=process.execPath;const cli=diskPath(path.join(path.dirname(require.resolve('vitest/package.json')),'vitest.mjs'));
       args=[cli,payload.mode==='discover'?'list':'run','--root',root,'--maxWorkers=1'];
       if(payload.mode==='discover')args.push('--json='+output);
       else{

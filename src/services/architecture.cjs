@@ -1,3 +1,4 @@
+const {diskPath}=require('./runtime-path.cjs');
 'use strict';
 const fs=require('node:fs/promises'),path=require('node:path'),crypto=require('node:crypto');
 const {spawn}=require('node:child_process');
@@ -32,7 +33,7 @@ function cycles(nodes,edges){
 function pythonParse(rows,interpreter){
   return new Promise((resolve,reject)=>{
     if(typeof interpreter!=='string'||!interpreter||interpreter.length>1024)throw new Error('Select a Python interpreter.');
-    const child=spawn(interpreter,['-I',path.join(__dirname,'python-architecture.py')],{windowsHide:true,stdio:['pipe','pipe','pipe']});
+    const child=spawn(interpreter,['-I',diskPath(path.join(__dirname,'python-architecture.py'))],{windowsHide:true,stdio:['pipe','pipe','pipe']});
     let output='',error='',finished=false;const timer=setTimeout(()=>{child.kill();reject(new Error('Python parser timed out.'));},15000);
     child.stdout.on('data',b=>{output+=b.toString();if(output.length>16*1024*1024)child.kill();});child.stderr.on('data',b=>{error=(error+b.toString()).slice(-2000);});
     child.on('error',e=>{clearTimeout(timer);reject(new Error('Selected Python interpreter is unavailable.'));});

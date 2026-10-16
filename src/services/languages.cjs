@@ -1,3 +1,4 @@
+const {diskPath}=require('./runtime-path.cjs');
 'use strict';
 const path=require('node:path'),{spawn}=require('node:child_process'),{pathToFileURL,fileURLToPath}=require('node:url');
 const {contained}=require('./workspace.cjs');
@@ -30,7 +31,7 @@ class Languages{
     if(payload.trusted!==true)throw new Error('Workspace trust is required before starting language services. Project configuration and plugins may be read.');
     const language=payload.language;if(!['python','typescript'].includes(language))throw new Error('Choose Python or TypeScript/JavaScript');
     const root=this.workspace.root();await this.stop(language);
-    const script=language==='python'?require.resolve('pyright/langserver.index.js'):path.join(path.dirname(require.resolve('typescript-language-server/package.json')),'lib/cli.mjs');
+    const script=language==='python'?diskPath(require.resolve('pyright/langserver.index.js')):diskPath(path.join(path.dirname(require.resolve('typescript-language-server/package.json')),'lib/cli.mjs'));
     const child=spawn(process.execPath,[script,'--stdio'],{cwd:root,windowsHide:true,detached:process.platform!=='win32',env:{...process.env,ELECTRON_RUN_AS_NODE:'1'},stdio:['pipe','pipe','pipe']});
     const session={root,child,buffers:new Map(),capabilities:null};
     const config=language==='python'?{python:{pythonPath:typeof payload.pythonInterpreter==='string'?payload.pythonInterpreter:'python',analysis:{autoSearchPaths:true,diagnosticMode:'workspace',typeCheckingMode:'basic'}}}:{};
@@ -45,7 +46,7 @@ class Languages{
     });
     this.sessions.set(language,session);
     try{
-      const result=await session.rpc.request('initialize',{processId:process.pid,rootUri:pathToFileURL(root).href,workspaceFolders:[{uri:pathToFileURL(root).href,name:path.basename(root)}],capabilities:{workspace:{configuration:true,workspaceFolders:true,applyEdit:false},textDocument:{synchronization:{dynamicRegistration:false},completion:{completionItem:{snippetSupport:false}},hover:{contentFormat:['markdown','plaintext']},definition:{linkSupport:true},publishDiagnostics:{versionSupport:true}}},initializationOptions:{disableAutomaticTypingAcquisition:true,tsserver:{path:require.resolve('typescript/lib/tsserver.js'),maxTsServerMemory:1024}}});
+      const result=await session.rpc.request('initialize',{processId:process.pid,rootUri:pathToFileURL(root).href,workspaceFolders:[{uri:pathToFileURL(root).href,name:path.basename(root)}],capabilities:{workspace:{configuration:true,workspaceFolders:true,applyEdit:false},textDocument:{synchronization:{dynamicRegistration:false},completion:{completionItem:{snippetSupport:false}},hover:{contentFormat:['markdown','plaintext']},definition:{linkSupport:true},publishDiagnostics:{versionSupport:true}}},initializationOptions:{disableAutomaticTypingAcquisition:true,tsserver:{path:diskPath(require.resolve('typescript/lib/tsserver.js')),maxTsServerMemory:1024}}});
       session.capabilities=result.capabilities;session.rpc.notify('initialized',{});session.rpc.notify('workspace/didChangeConfiguration',{settings:config});return {language,available:true,capabilities:session.capabilities};
     }catch(e){await this.stop(language);throw e;}
   }
