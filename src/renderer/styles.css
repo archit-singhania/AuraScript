@@ -2080,3 +2080,14 @@ html[data-reduce-motion='true'] *::before, html[data-reduce-motion='true'] *::af
 @media (prefers-reduced-motion: reduce) {
   :is(.app *, .toast), *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+.architecture-split{display:grid;grid-template-columns:minmax(220px,1fr) minmax(300px,2fr);gap:20px;margin-top:20px}
+.architecture-heading{display:block}.architecture-heading h1{margin-bottom:12px}.architecture-controls{display:grid;gap:14px}.architecture-controls label{display:flex;align-items:flex-start;gap:10px}.architecture-controls label input{flex:none;margin-top:3px}.architecture-controls>input{max-width:100%}
+.test-case{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border,#7774);overflow-wrap:anywhere}.test-case button{margin-left:auto;flex:none}.test-output{max-height:340px;overflow:auto;white-space:pre-wrap;padding:18px;border-radius:18px;background:var(--surface-2,#181820)}.coverage-hit{border-left:3px solid #4ba38b;margin-left:4px}.coverage-missed{border-left:3px dashed #cf806e;margin-left:4px}
+.debug-variable{padding:12px;overflow-wrap:anywhere;border-bottom:1px solid var(--border,#7774)}.rail{overflow-y:auto;scrollbar-width:thin}
+.proposal-source{width:100%;min-height:220px;font-family:var(--font-code,Consolas,monospace);font-size:13px;white-space:pre}.transaction-diff{height:440px;margin-block:20px;border:1px solid var(--border,#7774);border-radius:14px;overflow:hidden}
+.architecture-node{display:block;width:100%;text-align:left;margin-block:6px;overflow-wrap:anywhere}
+.architecture-node[aria-pressed="true"]{outline:2px solid var(--accent,#aa9ce0);outline-offset:2px}
+.architecture-graph{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:24px}
+.architecture-graph>div{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--border,#7774);border-radius:16px}
+.architecture-graph button{overflow-wrap:anywhere;font-size:12px}
+@media(max-width:900px){.architecture-split,.architecture-graph{grid-template-columns:1fr}}

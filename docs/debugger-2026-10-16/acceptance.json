@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-16T05:53:42.714Z",
+  "trustGate": true,
+  "persistedConfiguration": true,
+  "realBreakpoint": true,
+  "stackFrames": true,
+  "watchValue": "41",
+  "termination": true,
+  "pageErrors": []
+}

@@ -5,8 +5,19 @@ const crypto = require('node:crypto');
 const { Store } = require('./store.cjs');
 const { Workspace, revision } = require('./workspace.cjs');
 const { Processes, Git, diagnostics } = require('./processes.cjs');
+const { Architecture } = require('./architecture.cjs');
+const { Languages } = require('./languages.cjs');
+const { TestTools } = require('./tests.cjs');
+const { Debugger } = require('./debugger.cjs');
+const { PatchTransactions } = require('./transactions.cjs');
 const METHODS = [
   'bootstrap',
+  'architecture:index',
+  'architecture:get',
+  'language:start','language:stop','language:status','language:sync','language:request',
+  'test:start','test:list','test:cancel','coverage:import','coverage:get',
+  'debug:settings','debug:save','debug:launch','debug:list','debug:request','debug:stop',
+  'transaction:stage','transaction:list','transaction:get','transaction:check','transaction:cancelCheck','transaction:apply','transaction:discard',
   'workspace:open',
   'workspace:recent',
   'workspace:list',
@@ -170,6 +181,11 @@ class AppService {
     this.emit = options.emit || (() => {});
     this.store = new Store(options.userDataDir);
     this.workspace = new Workspace(this.store, options);
+    this.architecture = new Architecture(this.workspace, this.store);
+    this.languages = new Languages(this.workspace, this.emit);
+    this.tests = new TestTools(this.workspace, this.store, this.emit);
+    this.debugger = new Debugger(this.workspace, this.store, this.emit);
+    this.transactions = new PatchTransactions(this.workspace,this.store,this.emit,options);
     this.processes = new Processes(this.store, this.workspace, this.emit);
     this.git = new Git(this.workspace, this.store);
     this.turns = new Map();
@@ -203,6 +219,9 @@ class AppService {
       vision: ['ollama', 'openai'],
       transcription: ['openai', 'groq'],
       localDiagnostics: ['json', 'python'],
+      languageServers: ['pyright','typescript-language-server'],
+      languageServerStartupRequiresTrust: true,
+      architectureLanguages: ['python','javascript','typescript'],
       secureSecrets: typeof this.options.sealSecret === 'function',
       workspaceRequired: true,
       cloudRequiresKey: true,
@@ -210,12 +229,38 @@ class AppService {
     };
   }
   async invoke(method, payload = {}) {
+    await this.transactions.ready;
     if (this.closed) throw new Error('AuraScript services are shutting down.');
     if (!METHODS.includes(method)) throw new Error('This operation is not supported.');
     if (payload === null || typeof payload !== 'object' || Array.isArray(payload))
       throw new Error('Operation payload must be an object.');
     const s = this.store.state;
     switch (method) {
+      case 'architecture:index':return this.architecture.index(payload);
+      case 'architecture:get':return this.architecture.get();
+      case 'language:start':return this.languages.start(payload);
+      case 'language:stop':return this.languages.stop(payload.language);
+      case 'language:status':return this.languages.status();
+      case 'language:sync':return this.languages.sync(payload);
+      case 'language:request':return this.languages.request(payload);
+      case 'test:start':return this.tests.start(payload);
+      case 'test:list':return this.tests.list();
+      case 'test:cancel':return this.tests.cancel(payload);
+      case 'coverage:import':return this.tests.importCoverage(payload);
+      case 'coverage:get':return this.tests.coverage();
+      case 'debug:settings':return this.debugger.settings();
+      case 'debug:save':return this.debugger.save(payload);
+      case 'debug:launch':return this.debugger.launch(payload);
+      case 'debug:list':return this.debugger.list();
+      case 'debug:request':return this.debugger.request(payload);
+      case 'debug:stop':return this.debugger.stop(payload);
+      case 'transaction:stage':return this.transactions.stage(payload);
+      case 'transaction:list':return this.transactions.list();
+      case 'transaction:get':return this.transactions.read(payload.id);
+      case 'transaction:check':return this.transactions.check(payload);
+      case 'transaction:cancelCheck':return this.transactions.cancelCheck(payload);
+      case 'transaction:apply':return this.transactions.apply(payload);
+      case 'transaction:discard':return this.transactions.discard(payload);
       case 'bootstrap':
         return {
           settings: this.settings(),
@@ -230,6 +275,11 @@ class AppService {
           usage: s.usage,
         };
       case 'workspace:open':
+        if(this.transactions.applying.size)throw new Error('Wait for the active transaction before switching workspaces');
+        await this.transactions.close();
+        await this.debugger.close();
+        await this.tests.close();
+        await this.languages.close();
         return this.workspace.open(payload);
       case 'workspace:recent':
         return s.workspaces;
@@ -1166,6 +1216,10 @@ class AppService {
     this.closed = true;
     clearInterval(this.reminderTimer);
     this.workspace.close();
+    await this.languages.close();
+    await this.tests.close();
+    await this.debugger.close();
+    await this.transactions.close();
     const pending = [...this.turns.values()];
     for (const turn of pending) turn.controller.abort('Application closed.');
     await Promise.allSettled(pending.map((turn) => turn.promise));

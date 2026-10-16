@@ -29,8 +29,8 @@
     "electron": "44.5.1",
     "electron-builder": "26.15.3",
     "esbuild": "0.28.2",
-    "playwright": "1.62.1",
-    "monaco-editor": "0.57.0"
+    "monaco-editor": "0.57.0",
+    "playwright": "1.62.1"
   },
   "overrides": {
     "dompurify": "3.4.16",
@@ -92,5 +92,12 @@
       "icon": "assets/icon.png",
       "category": "Development"
     }
+  },
+  "dependencies": {
+    "@jridgewell/trace-mapping": "0.3.31",
+    "pyright": "1.1.414",
+    "typescript": "5.9.3",
+    "typescript-language-server": "6.0.2",
+    "vitest": "5.0.5"
   }
 }

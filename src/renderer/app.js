@@ -1,5 +1,15 @@
 import { VoiceInput, stopSpeech, speak, voiceAvailability } from './voice.js';
 import { reveal, reducedMotion, setMotionPreference } from './motion.js';
+import { renderArchitecture } from './architecture.js';
+import { LanguageTools } from './languages.js';
+import { TestExplorer } from './tests.js';
+import { DebuggerView } from './debugger.js';
+import { TransactionReview } from './transactions.js';
+let languageTools;
+let testExplorer;
+let debuggerView;
+let transactionReview;
+let pageRenderSequence=0;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -174,6 +184,11 @@ function shell() {
     ['explorer', 'folder', 'Files'],
     ['search', 'search', 'Find in workspace'],
     ['git', 'git', 'Source control'],
+    ['architecture', 'code', 'Architecture explorer'],
+    ['languages', 'code', 'Language services'],
+    ['tests', 'play', 'Tests & coverage'],
+    ['debugger', 'bolt', 'Integrated debugger'],
+    ['transactions', 'shield', 'Transactional changes'],
     ['history', 'history', 'Conversations'],
     ['knowledge', 'book', 'Knowledge'],
     ['memory', 'memory', 'Memory & reminders'],
@@ -849,6 +864,7 @@ async function compareDisk() {
 async function checkDiagnostics() {
   const f = state.files.get(state.activeFile);
   if (!f) return;
+  if(languageTools?.has(f.model)){await languageTools.sync(f.model);return;}
   const path = f.path,
     content = f.model.getValue();
   const result = await invoke('diagnostics:check', { path, content });
@@ -1149,7 +1165,7 @@ function renderAssistant(scroll = true) {
     const markup = state.messages
       .map(
         (m, i) =>
-          `<article class="chat-message ${attr(m.role || 'assistant')} ${m.error ? 'error' : ''}" data-testid="chat-message"><div class="message-label">${m.role === 'user' ? 'You' : 'Aura'} ${m.streaming ? '<span class="spinner"></span>' : ''}<span class="message-time">${esc(date(m.createdAt || m.timestamp))}</span></div><div class="message-text">${formatMessage(m.content ?? m.text ?? '')}</div>${m.proposals?.map((p, j) => `<div class="proposal"><h3>${esc(p.path || p.title || 'Proposed change')}</h3><p>${esc(p.summary || 'Review the complete replacement before applying. This proposal is untrusted AI output.')}</p><div class="row">${button('proposal-review', 'Review patch', { data: `data-message="${i}" data-index="${j}"` })}<span class="badge">No automatic execution</span></div></div>`).join('') || ''}${m.role !== 'user' && !m.streaming && !m.error ? `<div class="row" style="margin-top:8px">${button('speak-message', 'Read aloud', { className: 'ghost small', data: `data-index="${i}"` })}${button('copy-message', 'Copy', { className: 'ghost small', data: `data-index="${i}"` })}</div>` : ''}</article>`,
+          `<article class="chat-message ${attr(m.role || 'assistant')} ${m.error ? 'error' : ''}" data-testid="chat-message"><div class="message-label">${m.role === 'user' ? 'You' : 'Aura'} ${m.streaming ? '<span class="spinner"></span>' : ''}<span class="message-time">${esc(date(m.createdAt || m.timestamp))}</span></div><div class="message-text">${formatMessage(m.content ?? m.text ?? '')}</div>${m.proposals?.map((p, j) => `<div class="proposal"><h3>${esc(p.path || p.title || 'Proposed change')}</h3><p>${esc(p.summary || 'Review the complete replacement before applying. This proposal is untrusted AI output.')}</p><div class="row">${button('proposal-review', 'Review patch', { data: `data-message="${i}" data-index="${j}"` })}<span class="badge">No automatic execution</span></div></div>`).join('') || ''}${m.proposals?.length ? button('proposal-stage-all','Stage all proposals in worktree',{data:`data-message="${i}"`}) : ''}${m.role !== 'user' && !m.streaming && !m.error ? `<div class="row" style="margin-top:8px">${button('speak-message', 'Read aloud', { className: 'ghost small', data: `data-index="${i}"` })}${button('copy-message', 'Copy', { className: 'ghost small', data: `data-index="${i}"` })}</div>` : ''}</article>`,
       )
       .join('');
     const fragment = document.createElement('template');
@@ -1289,6 +1305,27 @@ function empty(title, description, action = '') {
 function renderPage() {
   const page = $('#page');
   if (!page) return;
+  page.dataset.renderSequence=String(++pageRenderSequence);
+  if(state.view==='transactions'){
+    guard(()=>transactionReview.page(page));
+    return;
+  }
+  if(state.view==='debugger'){
+    guard(()=>debuggerView.page($('#page')));
+    return;
+  }
+  if(state.view==='tests'){
+    guard(()=>testExplorer.page($('#page')));
+    return;
+  }
+  if(state.view==='languages'){
+    guard(()=>languageTools.page($('#page')));
+    return;
+  }
+  if(state.view==='architecture'){
+    guard(()=>renderArchitecture($('#page'),{invoke,openFile,notify:message=>toast(message,'error')}));
+    return;
+  }
   if (state.view === 'settings') {
     renderSettings();
     return;
@@ -1986,6 +2023,9 @@ async function action(name, node) {
       if (state.turnId) await invoke('ai:cancel', { turnId: state.turnId });
       stopSpeech();
       return;
+    case 'proposal-stage-all':
+      await transactionReview.fromAI(state.messages[Number(node.dataset.message)]?.proposals||[]);
+      return nav('transactions');
     case 'proposal-review':
       return reviewProposal(Number(node.dataset.message), Number(node.dataset.index));
     case 'copy-message':
@@ -2415,6 +2455,10 @@ async function boot() {
     monaco = window.monaco;
     if (!monaco)
       throw new Error('The offline editor could not load. Run the editor preparation command and relaunch.');
+    languageTools=new LanguageTools(monaco,{invoke,workspace:()=>state.workspace,files:()=>state.files,addFile,notify:message=>toast(message,'warning')});
+    testExplorer=new TestExplorer(monaco,{invoke,workspace:()=>state.workspace,openFile,notify:message=>toast(message,'warning')});
+    debuggerView=new DebuggerView({invoke,openFile,notify:message=>toast(message,'warning')});
+    transactionReview=new TransactionReview(monaco,{invoke,workspace:()=>state.workspace,files:()=>state.files,notify:message=>toast(message,'warning'),reloadApplied:async paths=>{for(const path of paths){const data=await invoke('file:read',{path});const file=state.files.get(path);if(file){if(file.dirty)throw new Error('A target buffer changed during apply; reload and inspect it.');file.model.setValue(data.content);file.revision=data.revision;file.dirty=false;file.external=false;}}renderTabs();persistSession();}});
     defineEditor();
     unsubscribe = window.aura.onEvent(onEvent);
     const processes = array(await invoke('process:list'));

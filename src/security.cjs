@@ -3,6 +3,12 @@ const path = require('node:path');
 
 const METHODS = new Set([
   'bootstrap',
+  'architecture:index',
+  'architecture:get',
+  'language:start','language:stop','language:status','language:sync','language:request',
+  'test:start','test:list','test:cancel','coverage:import','coverage:get',
+  'debug:settings','debug:save','debug:launch','debug:list','debug:request','debug:stop',
+  'transaction:stage','transaction:list','transaction:get','transaction:check','transaction:cancelCheck','transaction:apply','transaction:discard',
   'workspace:open',
   'workspace:recent',
   'workspace:list',
