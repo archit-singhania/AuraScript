@@ -43,20 +43,20 @@ class TestTools{
     for(const [stream,pipe] of [['stdout',child.stdout],['stderr',child.stderr]])pipe.setEncoding('utf8').on('data',text=>{row.output=(row.output+text).slice(-2*1024*1024);this.emit({type:'test:data',id,stream,data:text});});
     child.on('error',error=>{row.output+='\nRunner unavailable: '+error.code+'. Install pytest/coverage into the selected interpreter explicitly.';});
     active.done=new Promise(resolve=>child.on('close',async(code)=>{
-      clearTimeout(timer);this.active.delete(id);row.code=code;row.finishedAt=new Date().toISOString();row.status=active.cancelled?'cancelled':'failed';
+      clearTimeout(timer);this.active.delete(id);row.code=code;row.finishedAt=new Date().toISOString();let finalStatus=active.cancelled?'cancelled':'failed';
       try{
         if(!active.cancelled&&fs.existsSync(output)){
           const stat=await fsp.stat(output);if(stat.size>16*1024*1024)throw new Error('Test report exceeds size limit');const data=JSON.parse(await fsp.readFile(output,'utf8'));
-          if(payload.runner==='pytest'){row.cases=data.cases||[];row.results=data.results||[];row.status=code===0?'completed':'failed';}
+          if(payload.runner==='pytest'){row.cases=data.cases||[];row.results=data.results||[];finalStatus=code===0?'completed':'failed';}
           else if(payload.mode==='discover'){
-            if(!Array.isArray(data))throw new Error('Unexpected Vitest discovery report');row.cases=data.map(c=>{const filename=path.isAbsolute(c.file)?path.relative(root,c.file):c.file;this.workspace.resolve(filename);return {id:filename+'::'+c.name,path:filename.replaceAll('\\','/'),name:c.name,line:c.location?.line||1};}).slice(0,5000);row.status=code===0?'completed':'failed';
+            if(!Array.isArray(data))throw new Error('Unexpected Vitest discovery report');row.cases=data.map(c=>{const filename=path.isAbsolute(c.file)?path.relative(root,c.file):c.file;this.workspace.resolve(filename);return {id:filename+'::'+c.name,path:filename.replaceAll('\\','/'),name:c.name,line:c.location?.line||1};}).slice(0,5000);finalStatus=code===0?'completed':'failed';
           }else{
-            row.results=(data.testResults||[]).flatMap(suite=>(suite.assertionResults||[]).map(c=>({id:path.relative(root,suite.name).replaceAll('\\','/')+'::'+c.fullName,path:path.relative(root,suite.name).replaceAll('\\','/'),name:c.fullName,status:c.status,duration:c.duration||0,message:(c.failureMessages||[]).join('\n').slice(0,20000),failure_line:c.location?.line||1}))).slice(0,5000);row.cases=catalog;row.status=code===0?'completed':'failed';
+            row.results=(data.testResults||[]).flatMap(suite=>(suite.assertionResults||[]).map(c=>({id:path.relative(root,suite.name).replaceAll('\\','/')+'::'+c.fullName,path:path.relative(root,suite.name).replaceAll('\\','/'),name:c.fullName,status:c.status,duration:c.duration||0,message:(c.failureMessages||[]).join('\n').slice(0,20000),failure_line:c.location?.line||1}))).slice(0,5000);row.cases=catalog;finalStatus=code===0?'completed':'failed';
           }
           if(payload.coverage&&fs.existsSync(coverageOutput))row.coverage=this.parseCoverage(JSON.parse(await fsp.readFile(coverageOutput,'utf8')),root);
         }
-      }catch(error){row.status='failed';row.output+='\n'+error.message;}
-      this.store.save();this.emit({type:'test:finished',id,status:row.status});resolve();
+      }catch(error){finalStatus='failed';row.output+='\n'+error.message;}
+      row.status=finalStatus;this.store.save();this.emit({type:'test:finished',id,status:row.status});resolve();
     }));
     return {id,status:row.status};
   }

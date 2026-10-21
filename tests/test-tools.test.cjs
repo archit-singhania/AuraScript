@@ -25,3 +25,10 @@ test('pytest cancellation stops a live test and persists cancellation',async t=>
   fs.writeFileSync(path.join(root,'test_slow.py'),'import time\ndef test_slow():\n    time.sleep(20)\n');const d=await service.invoke('test:start',{runner:'pytest',mode:'discover',trusted:true,pythonInterpreter});const catalog=await finished(service,d.id);
   const run=await service.invoke('test:start',{runner:'pytest',mode:'run',trusted:true,pythonInterpreter,ids:[catalog.cases[0].id]});await new Promise(r=>setTimeout(r,500));await service.invoke('test:cancel',{id:run.id});assert.equal((await finished(service,run.id)).status,'cancelled');
 });
+
+test('test status stays running until its real report has finished loading',async t=>{
+  const {root,service}=await fixture(t);fs.writeFileSync(path.join(root,'sample.test.ts'),"import {test,expect} from 'vitest'; test('report fixture',()=>expect(1).toBe(1));");
+  const original=fs.promises.readFile;let release,observed;const reading=new Promise(resolve=>observed=resolve);const gate=new Promise(resolve=>release=resolve);
+  t.mock.method(fs.promises,'readFile',async function(file,...args){if(String(file).includes(path.join(path.dirname(root),'private','test-adapters'))&&String(file).endsWith('.json')){observed();await gate;}return original.call(this,file,...args);});
+  try{const started=await service.invoke('test:start',{runner:'vitest',mode:'discover',trusted:true});await Promise.race([reading,new Promise((_,reject)=>{const timer=setTimeout(()=>reject(new Error('Report was not opened')),15000);timer.unref();})]);const pending=(await service.invoke('test:list')).find(row=>row.id===started.id);assert.equal(pending.status,'running','A terminal state must include its decoded report');release();const done=await finished(service,started.id);assert.equal(done.status,'completed',done.output);assert.equal(done.cases.length,1);}finally{release();}
+});
