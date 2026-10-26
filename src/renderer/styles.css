@@ -2084,6 +2084,15 @@ html[data-reduce-motion='true'] *::before, html[data-reduce-motion='true'] *::af
 .architecture-heading{display:block}.architecture-heading h1{margin-bottom:12px}.architecture-controls{display:grid;gap:14px}.architecture-controls label{display:flex;align-items:flex-start;gap:10px}.architecture-controls label input{flex:none;margin-top:3px}.architecture-controls>input{max-width:100%}
 .test-case{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border,#7774);overflow-wrap:anywhere}.test-case button{margin-left:auto;flex:none}.test-output{max-height:340px;overflow:auto;white-space:pre-wrap;padding:18px;border-radius:18px;background:var(--surface-2,#181820)}.coverage-hit{border-left:3px solid #4ba38b;margin-left:4px}.coverage-missed{border-left:3px dashed #cf806e;margin-left:4px}
 .debug-variable{padding:12px;overflow-wrap:anywhere;border-bottom:1px solid var(--border,#7774)}.rail{overflow-y:auto;scrollbar-width:thin}
+.architecture-split > *, .architecture-graph > div { min-width: 0; }
+.architecture-graph > div { background: color-mix(in srgb, var(--accent) 4%, var(--panel)); border-color: var(--line); padding: 16px; }
+.architecture-node { padding: 12px 14px; line-height: 1.5; }
+.architecture-node[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
+.test-case { line-height: 1.6; }
+.test-case:focus-within, .debug-variable:focus-within { background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
+.debug-variable, .test-output { font-variant-numeric: tabular-nums; }
+.test-output { background: var(--panel); color: var(--text); border: 1px solid var(--line); line-height: 1.7; scrollbar-gutter: stable; }
+.architecture-controls input:focus-visible, .proposal-source:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .proposal-source{width:100%;min-height:220px;font-family:var(--font-code,Consolas,monospace);font-size:13px;white-space:pre}.transaction-diff{height:440px;margin-block:20px;border:1px solid var(--border,#7774);border-radius:14px;overflow:hidden}
 .architecture-node{display:block;width:100%;text-align:left;margin-block:6px;overflow-wrap:anywhere}
 .architecture-node[aria-pressed="true"]{outline:2px solid var(--accent,#aa9ce0);outline-offset:2px}
