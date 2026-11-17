@@ -1,0 +1,5 @@
+{
+  "checkedAt": "2026-10-31T10:45:20.810Z",
+  "scope": "Source Electron: dependency inspection and persisted snapshot; environment save/reload; impact/refactoring empty states; light/dark captures. Service journeys are covered separately by regression tests.",
+  "errors": []
+}

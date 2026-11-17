@@ -1,0 +1,6 @@
+{
+  "checkedAt": "2026-10-31T10:49:27.239Z",
+  "packaged": true,
+  "scope": "Electron: dependency inspection and persisted snapshot; environment save/reload; impact/refactoring empty states; light/dark captures. Service journeys are covered separately by regression tests.",
+  "errors": []
+}

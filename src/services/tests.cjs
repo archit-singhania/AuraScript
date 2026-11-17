@@ -36,7 +36,7 @@ class TestTools{
         if(payload.coverage)throw new Error('Import an existing Istanbul report. This release does not install coverage providers automatically.');
       }
     }
-    const row={id,root,runner:payload.runner,mode:payload.mode,status:'running',startedAt:new Date().toISOString(),selectedIds:selection,cases:[],results:[],output:'',coverageRequested:payload.coverage===true};
+    const row={id,root,environmentFingerprint:this.store.state.environmentReports?.[root]?.fingerprint||null,runner:payload.runner,mode:payload.mode,status:'running',startedAt:new Date().toISOString(),selectedIds:selection,cases:[],results:[],output:'',coverageRequested:payload.coverage===true};
     const child=spawn(program,args,{cwd:root,windowsHide:true,detached:process.platform!=='win32',env:{...process.env,ELECTRON_RUN_AS_NODE:'1',PYTHONDONTWRITEBYTECODE:'1'},stdio:['ignore','pipe','pipe']});
     const active={row,child,cancelled:false};this.active.set(id,active);this.store.state.testRuns.unshift(row);this.store.state.testRuns=this.store.state.testRuns.slice(0,100);this.store.save();
     const timer=setTimeout(()=>this.cancel({id}).catch(()=>{}),10*60*1000);timer.unref();

@@ -1,0 +1,8 @@
+{
+  "checkedAt": "2026-10-29T11:20:32.754Z",
+  "packaged": true,
+  "scope": "Electron: approved Node CPU profile, real hotspots, saved run after renderer reload, light/dark captures",
+  "pythonChecked": true,
+  "status": "completed",
+  "errors": []
+}

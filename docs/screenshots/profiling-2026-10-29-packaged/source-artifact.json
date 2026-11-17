@@ -1,0 +1,42 @@
+{
+  "checkedAt": "2026-10-29T11:20:33.388Z",
+  "archiveSha256": "7be40c88f40eebb7211a26231666c64d792be6207928d6bb991f81d591d2bc95",
+  "executableSha256": "4ead24b8261c21b9db4bfff83d2e4aaa1947a72180aba1c66c663d02e6c9ffe4",
+  "files": [
+    {
+      "path": "src/services/profiling.cjs",
+      "source": "38d08f1fed539125ead71e30f2aac197c1adf01e14f97b324a9c5a4f1c97659d",
+      "packaged": "38d08f1fed539125ead71e30f2aac197c1adf01e14f97b324a9c5a4f1c97659d"
+    },
+    {
+      "path": "src/services/profile-python.py",
+      "source": "57666910e78e66c1e62ae6e52a020aef3ed8c73fc18c4898d97d3a80a4933e4e",
+      "packaged": "57666910e78e66c1e62ae6e52a020aef3ed8c73fc18c4898d97d3a80a4933e4e"
+    },
+    {
+      "path": "src/services/app-service.cjs",
+      "source": "9170e45c27ade8daea261ae2b77097e5abb32abe91a4b7d3c17383f493e5fbe0",
+      "packaged": "9170e45c27ade8daea261ae2b77097e5abb32abe91a4b7d3c17383f493e5fbe0"
+    },
+    {
+      "path": "src/security.cjs",
+      "source": "47dda02073ba848dc09b4817f7bb42efe60b31be2c584fc616862b3dc01b76de",
+      "packaged": "47dda02073ba848dc09b4817f7bb42efe60b31be2c584fc616862b3dc01b76de"
+    },
+    {
+      "path": "src/renderer/profiling.js",
+      "source": "2e179091c7862bbbf88d356c25712b90636a1ba2793f14e8f6682ba252ce549d",
+      "packaged": "2e179091c7862bbbf88d356c25712b90636a1ba2793f14e8f6682ba252ce549d"
+    },
+    {
+      "path": "src/renderer/app.js",
+      "source": "7aa00aa8d3cb3ce3f3bbf5ee6088fbc9ece50f7edbe935ed02d7208d6c974e5c",
+      "packaged": "7aa00aa8d3cb3ce3f3bbf5ee6088fbc9ece50f7edbe935ed02d7208d6c974e5c"
+    },
+    {
+      "path": "src/renderer/styles.css",
+      "source": "961ee7846a7a5d667d66d0655920a224ee87276041473a4ec07ce0137c09ace8",
+      "packaged": "961ee7846a7a5d667d66d0655920a224ee87276041473a4ec07ce0137c09ace8"
+    }
+  ]
+}

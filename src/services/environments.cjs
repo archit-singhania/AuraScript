@@ -1,0 +1,28 @@
+'use strict';
+const crypto=require('node:crypto');
+const {execute}=require('./processes.cjs');
+const hash=x=>crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
+function validate(data){
+ if(!data||data.schemaVersion!==1||typeof data.pythonInterpreter!=='string'||data.pythonInterpreter.length>1024||data.pythonInterpreter.includes('\0'))throw Error('Use manifest schemaVersion 1 and a selected Python interpreter.');
+ if(!data.runtimes||Object.keys(data.runtimes).some(k=>!['node','python'].includes(k))||Object.values(data.runtimes).some(v=>typeof v!=='string'||!/^\d+\.\d+\.\d+$/.test(v)))throw Error('Runtime requirements use exact versions, for example 3.11.9.');
+ if(!Array.isArray(data.tools)||data.tools.some(t=>!['git','pytest','coverage','debugpy'].includes(t)))throw Error('Supported tool diagnostics: git, pytest, coverage, debugpy.');
+ if(!Array.isArray(data.setup)||data.setup.length>20)throw Error('Provide at most 20 setup steps.');
+ const setup=data.setup.map(s=>{if(typeof s.title!=='string'||!s.title.trim()||s.title.length>100||typeof s.command!=='string'||!s.command.trim()||s.command.length>4000||s.command.includes('\0'))throw Error('Every setup step needs a short title and command.');if(/(?:password|token|api[_-]?key|secret)\s*[:=]\s*["']?[^\s$%{]|https?:\/\/[^/\s]+:[^/\s]+@/i.test(s.command))throw Error('Keep credential values out of setup commands; reference separately configured environment variables.');return {title:s.title,command:s.command};});
+ return {schemaVersion:1,pythonInterpreter:data.pythonInterpreter,runtimes:{...data.runtimes},tools:[...new Set(data.tools)],setup};
+}
+class Environments{
+ constructor(workspace,store,processes){this.workspace=workspace;this.store=store;this.processes=processes;store.state.environmentManifests||={};store.state.environmentReports||={};store.state.environmentReceipts||=[];}
+ get(){const root=this.workspace.root(),saved=this.store.state.environmentManifests[root]||null;return {manifest:saved,report:this.store.state.environmentReports[root]||null,receipts:this.store.state.environmentReceipts.filter(r=>r.root===root).map(r=>({...r,process:this.store.state.processHistory.find(p=>p.id===r.processId)||null}))};}
+ save({manifest,expectedRevision}){const root=this.workspace.root(),old=this.store.state.environmentManifests[root];if((old?.revision||0)!==expectedRevision)throw Error('Environment manifest changed; reload before saving.');const data=validate(manifest),row={revision:(old?.revision||0)+1,hash:hash(data),data,updatedAt:new Date().toISOString()};this.store.state.environmentManifests[root]=row;this.store.save();return row;}
+ async diagnose({confirmed,expectedRevision}){
+  if(confirmed!==true)throw Error('Approve running the selected interpreter and installed tool version checks.');const root=this.workspace.root(),manifest=this.store.state.environmentManifests[root];if(!manifest||manifest.revision!==expectedRevision)throw Error('Save and review the current manifest first.');const data=manifest.data;let python=null,error=null,modules={};
+  const probe='import json,platform,importlib.util; print(json.dumps({"version":platform.python_version(),"tools":{n:importlib.util.find_spec(n) is not None for n in ("pytest","coverage","debugpy")}}))';
+  try{const r=await execute(data.pythonInterpreter,['-I','-c',probe],{cwd:root,timeout:10000});if(r.code!==0)throw Error('Selected interpreter unavailable or probe failed');const value=JSON.parse(r.stdout.trim());python=value.version;modules=value.tools;}catch(e){error=e.message;}
+  const versions={node:process.versions.node,python},tools={};for(const tool of data.tools){if(tool==='git'){try{const r=await execute('git',['--version'],{cwd:root,timeout:5000});tools.git=r.code===0?r.stdout.trim():'Unavailable';}catch{tools.git='Unavailable';}}else tools[tool]=modules[tool]?'Available':'Unavailable';}
+  const mismatches=Object.entries(data.runtimes).filter(([k,v])=>versions[k]!==v).map(([k,v])=>`${k}: expected ${v}, observed ${versions[k]||'unavailable'}`);for(const [k,v]of Object.entries(tools))if(v==='Unavailable')mismatches.push(`${k}: install explicitly into the selected environment`);
+  const report={checkedAt:new Date().toISOString(),manifestHash:manifest.hash,versions,tools,mismatches,error,fingerprint:hash({versions,tools,platform:process.platform,arch:process.arch,manifestHash:manifest.hash})};if(this.workspace.root()!==root)throw Error('Workspace changed during diagnostics');this.store.state.environmentReports[root]=report;this.store.save();return report;
+ }
+ setup({expectedRevision,index,confirmed}){if(confirmed!==true)throw Error('Approve the exact setup command before execution');const root=this.workspace.root(),manifest=this.store.state.environmentManifests[root];if(!manifest||manifest.revision!==expectedRevision)throw Error('Manifest changed; review the setup command again');const step=manifest.data.setup[index];if(!Number.isInteger(index)||!step)throw Error('Select a saved setup step');const process=this.processes.start({command:step.command,confirmed:true});const receipt={root,processId:process.id,manifestHash:manifest.hash,manifestRevision:manifest.revision,index,title:step.title,startedAt:new Date().toISOString()};this.store.state.environmentReceipts.unshift(receipt);this.store.state.environmentReceipts=this.store.state.environmentReceipts.slice(0,100);this.store.save();return receipt;}
+ async cancel({id}){if(!this.store.state.environmentReceipts.some(r=>r.root===this.workspace.root()&&r.processId===id))throw Error('Setup process does not belong to this workspace');return this.processes.cancel({id});}
+}
+module.exports={Environments,validate};

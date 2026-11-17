@@ -1,0 +1,77 @@
+{
+  "checkedAt": "2026-10-31T10:49:52.992Z",
+  "archiveSha256": "cd6f90672ee3f10b6bfb8a1f7b53bfa8f37686072b0d5d04d592d61706ed2f0d",
+  "executableSha256": "66696fad624b6e91789a34bd8f84a24481cc84c0dc5430a02d10b47464fa20c1",
+  "files": [
+    {
+      "file": "src/services/dependencies.cjs",
+      "source": "3b6a5ee8977e8d788e00a6e194cfe4d7a17bc17f0e06b2dc9a0fe08b2324470d",
+      "packaged": "3b6a5ee8977e8d788e00a6e194cfe4d7a17bc17f0e06b2dc9a0fe08b2324470d"
+    },
+    {
+      "file": "src/services/environments.cjs",
+      "source": "edc78fae4ffa7b9cb8da33de1d6102cdce957bcc0463ff6a2e0e4aabdd5c48cb",
+      "packaged": "edc78fae4ffa7b9cb8da33de1d6102cdce957bcc0463ff6a2e0e4aabdd5c48cb"
+    },
+    {
+      "file": "src/services/impact.cjs",
+      "source": "35b5ce1063aeb6ce62ad87a560583926eb38fd2846173fd6c27b25714ce93727",
+      "packaged": "35b5ce1063aeb6ce62ad87a560583926eb38fd2846173fd6c27b25714ce93727"
+    },
+    {
+      "file": "src/services/refactoring.cjs",
+      "source": "8798504efc34ea43647714e5af81e1dd8f5478f2802d5e14e8f3d5b4e2f6cd99",
+      "packaged": "8798504efc34ea43647714e5af81e1dd8f5478f2802d5e14e8f3d5b4e2f6cd99"
+    },
+    {
+      "file": "src/services/app-service.cjs",
+      "source": "347dd51ce5897d61cfb554b5a88a64e12fe21306d6fa5be4166e3cb9d5ff18d2",
+      "packaged": "347dd51ce5897d61cfb554b5a88a64e12fe21306d6fa5be4166e3cb9d5ff18d2"
+    },
+    {
+      "file": "src/services/tests.cjs",
+      "source": "cd5095c97bac545ebd6fe7cdcfde8b75d9ad8961816c0badf77734c004d70a99",
+      "packaged": "cd5095c97bac545ebd6fe7cdcfde8b75d9ad8961816c0badf77734c004d70a99"
+    },
+    {
+      "file": "src/services/profiling.cjs",
+      "source": "a737ac6747ea2e016b8eaa3c0aad501c25021a642a2f0f90663e94a15a66fbec",
+      "packaged": "a737ac6747ea2e016b8eaa3c0aad501c25021a642a2f0f90663e94a15a66fbec"
+    },
+    {
+      "file": "src/security.cjs",
+      "source": "9c8a0979fe080cf774e44701d5f2584656380bd9dbb0ce917982297dbff1c2ce",
+      "packaged": "9c8a0979fe080cf774e44701d5f2584656380bd9dbb0ce917982297dbff1c2ce"
+    },
+    {
+      "file": "src/renderer/dependencies.js",
+      "source": "8c78a4d3f51efa1b39df0cc57ba0712ed65f840fa9d9bba9000b19afbb03659c",
+      "packaged": "8c78a4d3f51efa1b39df0cc57ba0712ed65f840fa9d9bba9000b19afbb03659c"
+    },
+    {
+      "file": "src/renderer/environments.js",
+      "source": "83501330035c8ee4bf61b3a32a85153e1c5445d34d84ddddf2a374ef9318d046",
+      "packaged": "83501330035c8ee4bf61b3a32a85153e1c5445d34d84ddddf2a374ef9318d046"
+    },
+    {
+      "file": "src/renderer/impact.js",
+      "source": "c59df736c577c8876ce0328eca67d0cc732acb4fadb08e0ef5027fe69bd2e978",
+      "packaged": "c59df736c577c8876ce0328eca67d0cc732acb4fadb08e0ef5027fe69bd2e978"
+    },
+    {
+      "file": "src/renderer/refactoring.js",
+      "source": "1f79cf83577332645c44b333e0e3430be589337626a7757c0c4f626ca66ef14a",
+      "packaged": "1f79cf83577332645c44b333e0e3430be589337626a7757c0c4f626ca66ef14a"
+    },
+    {
+      "file": "src/renderer/app.js",
+      "source": "6723fd6e9f19cc58db1940b8d5d4558494a391e5b8c66b1069e12d25fbc856a7",
+      "packaged": "6723fd6e9f19cc58db1940b8d5d4558494a391e5b8c66b1069e12d25fbc856a7"
+    },
+    {
+      "file": "src/renderer/styles.css",
+      "source": "961ee7846a7a5d667d66d0655920a224ee87276041473a4ec07ce0137c09ace8",
+      "packaged": "961ee7846a7a5d667d66d0655920a224ee87276041473a4ec07ce0137c09ace8"
+    }
+  ]
+}

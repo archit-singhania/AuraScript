@@ -1,6 +1,11 @@
 import { VoiceInput, stopSpeech, speak, voiceAvailability } from './voice.js';
 import { reveal, reducedMotion, setMotionPreference } from './motion.js';
 import { renderArchitecture } from './architecture.js';
+import { renderProfiling } from './profiling.js';
+import { renderDependencies } from './dependencies.js';
+import { renderEnvironment } from './environments.js';
+import { renderImpact } from './impact.js';
+import { renderRefactoring } from './refactoring.js';
 import { LanguageTools } from './languages.js';
 import { TestExplorer } from './tests.js';
 import { DebuggerView } from './debugger.js';
@@ -185,6 +190,11 @@ function shell() {
     ['search', 'search', 'Find in workspace'],
     ['git', 'git', 'Source control'],
     ['architecture', 'code', 'Architecture explorer'],
+    ['profiling', 'code', 'Profiling workspace'],
+    ['dependencies', 'code', 'Dependency intelligence'],
+    ['environment', 'code', 'Workspace environment'],
+    ['impact', 'code', 'Change-impact analysis'],
+    ['refactoring', 'code', 'Refactoring previews'],
     ['languages', 'code', 'Language services'],
     ['tests', 'play', 'Tests & coverage'],
     ['debugger', 'bolt', 'Integrated debugger'],
@@ -1324,6 +1334,26 @@ function renderPage() {
   }
   if(state.view==='architecture'){
     guard(()=>renderArchitecture($('#page'),{invoke,openFile,notify:message=>toast(message,'error')}));
+    return;
+  }
+  if(state.view==='profiling'){
+    guard(()=>renderProfiling($('#page'),{invoke,openFile,notify:message=>toast(message,'error')}));
+    return;
+  }
+  if(state.view==='dependencies'){
+    guard(()=>renderDependencies($('#page'),{invoke,notify:message=>toast(message,'error')}));
+    return;
+  }
+  if(state.view==='environment'){
+    guard(()=>renderEnvironment($('#page'),{invoke,notify:message=>toast(message,'error')}));
+    return;
+  }
+  if(state.view==='impact'){
+    guard(()=>renderImpact($('#page'),{invoke,notify:message=>toast(message,'error')}));
+    return;
+  }
+  if(state.view==='refactoring'){
+    guard(()=>renderRefactoring($('#page'),{invoke,dirtyPaths:()=>[...state.files.values()].filter(f=>f.dirty).map(f=>f.path),notify:message=>toast(message,'error')}));
     return;
   }
   if (state.view === 'settings') {

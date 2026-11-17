@@ -2100,3 +2100,11 @@ html[data-reduce-motion='true'] *::before, html[data-reduce-motion='true'] *::af
 .architecture-graph>div{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--border,#7774);border-radius:16px}
 .architecture-graph button{overflow-wrap:anywhere;font-size:12px}
 @media(max-width:900px){.architecture-split,.architecture-graph{grid-template-columns:1fr}}
+
+.profiling-workspace{display:grid;gap:20px}.profiling-workspace .card{overflow:auto}.profiling-workspace th,.profiling-workspace td{text-align:left;padding:10px;border-bottom:1px solid var(--border)}.profiling-workspace td small{display:block}.profiling-workspace details details{margin-left:18px}.profiling-workspace summary{cursor:pointer;padding:7px}.profiling-workspace .mono-preview{max-height:240px;overflow:auto}.profiling-workspace .card>button{margin:5px}
+
+
+.profiling-workspace .form-grid>label{display:flex;flex-direction:column;gap:6px}.profiling-workspace .card p{overflow-wrap:anywhere}.profiling-workspace table{width:100%}.profiling-workspace td{max-width:260px;overflow-wrap:anywhere}
+
+
+.profiling-workspace td:nth-child(2),.profiling-workspace td:nth-child(3){white-space:nowrap;min-width:62px}.profiling-workspace .card+.card{margin-top:16px}

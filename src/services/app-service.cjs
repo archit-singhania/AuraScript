@@ -6,6 +6,11 @@ const { Store } = require('./store.cjs');
 const { Workspace, revision } = require('./workspace.cjs');
 const { Processes, Git, diagnostics } = require('./processes.cjs');
 const { Architecture } = require('./architecture.cjs');
+const { Profiling } = require('./profiling.cjs');
+const { Dependencies } = require('./dependencies.cjs');
+const { Environments } = require('./environments.cjs');
+const { Impact } = require('./impact.cjs');
+const { Refactoring } = require('./refactoring.cjs');
 const { Languages } = require('./languages.cjs');
 const { TestTools } = require('./tests.cjs');
 const { Debugger } = require('./debugger.cjs');
@@ -14,6 +19,11 @@ const METHODS = [
   'bootstrap',
   'architecture:index',
   'architecture:get',
+  'profile:start','profile:list','profile:get','profile:cancel','profile:source',
+  'dependencies:inspect','dependencies:list','dependencies:cached','dependencies:lookup',
+  'environment:get','environment:save','environment:diagnose','environment:setup','environment:cancel',
+  'impact:changes','impact:analyze','impact:get','impact:run',
+  'refactor:preview','refactor:list','refactor:stage',
   'language:start','language:stop','language:status','language:sync','language:request',
   'test:start','test:list','test:cancel','coverage:import','coverage:get',
   'debug:settings','debug:save','debug:launch','debug:list','debug:request','debug:stop',
@@ -182,12 +192,17 @@ class AppService {
     this.store = new Store(options.userDataDir);
     this.workspace = new Workspace(this.store, options);
     this.architecture = new Architecture(this.workspace, this.store);
+    this.profiling = new Profiling(this.workspace, this.store, this.emit);
+    this.dependencies = new Dependencies(this.workspace,this.store);
     this.languages = new Languages(this.workspace, this.emit);
     this.tests = new TestTools(this.workspace, this.store, this.emit);
     this.debugger = new Debugger(this.workspace, this.store, this.emit);
     this.transactions = new PatchTransactions(this.workspace,this.store,this.emit,options);
+    this.refactoring = new Refactoring(this.workspace,this.store,this.languages,this.transactions);
     this.processes = new Processes(this.store, this.workspace, this.emit);
+    this.environments = new Environments(this.workspace,this.store,this.processes);
     this.git = new Git(this.workspace, this.store);
+    this.impact = new Impact(this.workspace,this.store,this.architecture,this.tests,this.git);
     this.turns = new Map();
     this.imports = new Map();
     this.closed = false;
@@ -222,6 +237,7 @@ class AppService {
       languageServers: ['pyright','typescript-language-server'],
       languageServerStartupRequiresTrust: true,
       architectureLanguages: ['python','javascript','typescript'],
+      profiling: ['python-cpu','python-memory','node-cpu','node-heap'],
       secureSecrets: typeof this.options.sealSecret === 'function',
       workspaceRequired: true,
       cloudRequiresKey: true,
@@ -238,6 +254,27 @@ class AppService {
     switch (method) {
       case 'architecture:index':return this.architecture.index(payload);
       case 'architecture:get':return this.architecture.get();
+      case 'profile:start':return this.profiling.start(payload);
+      case 'profile:list':return this.profiling.list();
+      case 'profile:get':return this.profiling.get(payload);
+      case 'profile:cancel':return this.profiling.cancel(payload);
+      case 'profile:source':return this.profiling.source(payload);
+      case 'dependencies:inspect':return this.dependencies.inspect(payload);
+      case 'dependencies:list':return this.dependencies.list();
+      case 'dependencies:cached':return this.dependencies.cached();
+      case 'dependencies:lookup':return this.dependencies.lookup(payload);
+      case 'environment:get':return this.environments.get();
+      case 'environment:save':return this.environments.save(payload);
+      case 'environment:diagnose':return this.environments.diagnose(payload);
+      case 'environment:setup':return this.environments.setup(payload);
+      case 'environment:cancel':return this.environments.cancel(payload);
+      case 'impact:changes':return this.impact.changes();
+      case 'impact:analyze':return this.impact.analyze(payload);
+      case 'impact:get':return this.impact.get();
+      case 'impact:run':return this.impact.run(payload);
+      case 'refactor:preview':return this.refactoring.preview(payload);
+      case 'refactor:list':return this.refactoring.list();
+      case 'refactor:stage':return this.refactoring.stage(payload);
       case 'language:start':return this.languages.start(payload);
       case 'language:stop':return this.languages.stop(payload.language);
       case 'language:status':return this.languages.status();
@@ -276,6 +313,7 @@ class AppService {
         };
       case 'workspace:open':
         if(this.transactions.applying.size)throw new Error('Wait for the active transaction before switching workspaces');
+        await this.profiling.close();
         await this.transactions.close();
         await this.debugger.close();
         await this.tests.close();
@@ -1216,6 +1254,7 @@ class AppService {
     this.closed = true;
     clearInterval(this.reminderTimer);
     this.workspace.close();
+    await this.profiling.close();
     await this.languages.close();
     await this.tests.close();
     await this.debugger.close();
